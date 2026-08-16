@@ -6,23 +6,23 @@
     <title>Simulador Geológico e Ecológico 3D - Leve (WebGL 2.0)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { width: 100vw; height: 100vh; overflow: hidden; background-color: #0d1117; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #c9d1d9; }
+        body { width: 100vw; height: 100vh; overflow: hidden; background-color: #0d1117; font-family: sans-serif; color: #c9d1d9; }
         #canvas-container { width: 100%; height: 100%; display: block; }
         #ui-panel {
-            position: absolute; top: 12px; left: 12px; width: 320px;
-            background: rgba(22, 27, 34, 0.85); backdrop-filter: blur(8px);
+            position: absolute; top: 12px; left: 12px; width: 310px;
+            background: rgba(22, 27, 34, 0.9); backdrop-filter: blur(8px);
             border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px;
             padding: 16px; font-size: 13px; max-height: calc(100vh - 24px); overflow-y: auto;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 10;
         }
         h2 { font-size: 15px; color: #58a6ff; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
         .control-group { margin-bottom: 10px; }
         label { display: flex; justify-content: space-between; margin-bottom: 4px; font-weight: 500; }
         span.val { color: #8b949e; }
         input[type=range] { width: 100%; accent-color: #1f6feb; cursor: pointer; }
-        .btn-group { display: flex; gap: 8px; margin-top: 14px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 12px; }
         button {
-            flex: 1; padding: 8px 12px; background: #238636; border: none; border-radius: 6px;
+            flex: 1; padding: 8px; background: #238636; border: none; border-radius: 6px;
             color: #ffffff; font-weight: 600; cursor: pointer; transition: background 0.2s;
         }
         button:hover { background: #2ea043; }
@@ -30,9 +30,9 @@
         button.btn-danger:hover { background: #f85149; }
         button.btn-sec { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; }
         button.btn-sec:hover { background: #30363d; }
-        #stats { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); padding: 6px 12px; border-radius: 4px; font-family: monospace; font-size: 11px; }
+        #stats { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.7); padding: 6px 12px; border-radius: 4px; font-family: monospace; font-size: 11px; z-index: 10; }
     </style>
-    <!-- Carregamento das bibliotecas Three.js e OrbitControls via CDN -->
+    <!-- Inclusão do Three.js e OrbitControls via CDN confiável -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
@@ -89,301 +89,293 @@
     <div id="stats">FPS: <span id="fps">60</span> | Células: <span id="cell-count">16384</span></div>
 
     <script>
-        // --- CÓDIGO GLSL DOS SHADERS GPGPU (WebGL 2.0) ---
+        // --- SHADERS GLSL ES 1.00 COMPATÍVEIS COM TODOS OS DISPOSITIVOS ---
 
-        // 1. Pass-Through Vertex Shader
-        const quadVertexShader = `#version 300 es
-        in vec2 position;
-        out vec2 vUv;
-        void main() {
-            vUv = position * 0.5 + 0.5;
-            gl_Position = vec4(position, 0.0, 1.0);
-        }`;
-
-        // 2. Shader de Inicialização do Terreno (Ruído Fractal Simplex)
-        const initTerrainShader = `#version 300 es
-        precision highp float;
-        in vec2 vUv;
-        out vec4 fragColor;
-
-        vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
-        float snoise(vec2 v){
-            const vec4 C = vec4(0.211324865405187, 0.366025403784439,
-                               -0.577350269189626, 0.024390243902439);
-            vec2 i  = floor(v + dot(v, C.yy) );
-            vec2 x0 = v -   i + dot(i, C.xx);
-            vec2 i1;
-            i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-            vec4 x12 = x0.xyxy + C.xxzz;
-            x12.xy -= i1;
-            i = mod(i, 289.0);
-            vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
-            + i.x + vec3(0.0, i1.x, 1.0 ));
-            vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-            m = m*m ;
-            m = m*m ;
-            vec3 x = 2.0 * fract(p * C.www) - 1.0;
-            vec3 h = abs(x) - 0.5;
-            vec3 ox = floor(x + 0.5);
-            vec3 a0 = x - ox;
-            m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-            vec3 g;
-            g.x  = a0.x  * x0.x  + h.x  * x0.y;
-            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-            return 130.0 * dot(m, g);
-        }
-
-        float fbm(vec2 p) {
-            float val = 0.0;
-            float amp = 0.5;
-            for(int i=0; i<5; i++) {
-                val += amp * snoise(p);
-                p *= 2.02;
-                amp *= 0.5;
+        const quadVertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = vec4(position, 1.0);
             }
-            return val;
-        }
+        `;
 
-        void main() {
-            vec2 st = vUv * 3.0;
-            float h = fbm(st) * 0.5 + 0.5;
-            h = pow(h, 1.8); // Vales mais pronunciados
-            
-            float bedrock = h * 0.8;
-            float regolith = h * 0.2;
-            float water = 0.0;
-            float sediment = 0.0;
+        const initTerrainShader = `
+            varying vec2 vUv;
 
-            fragColor = vec4(bedrock, regolith, water, sediment);
-        }`;
-
-        // 3. Shader de Hidrodinâmica e Outflow Flux (Águas Rasas)
-        const fluxShader = `#version 300 es
-        precision highp float;
-        in vec2 vUv;
-        uniform sampler2D uTerrain;
-        uniform sampler2D uFlux;
-        uniform vec2 uTexelSize;
-        uniform float uRainRate;
-        uniform float uDeltaTime;
-        out vec4 fragColor;
-
-        void main() {
-            vec4 t = texture(uTerrain, vUv);
-            float b = t.r;
-            float r = t.g;
-            float d = t.b + uRainRate * uDeltaTime; // Adiciona chuva
-            float hCenter = b + r + d;
-
-            vec4 flux = texture(uFlux, vUv);
-
-            float hL = texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).r + texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).g + texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).b;
-            float hR = texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).r + texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).g + texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).b;
-            float hT = texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).r + texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).g + texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).b;
-            float hB = texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).r + texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).g + texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).b;
-
-            float g = 9.81;
-            float pipeArea = 1.0;
-            float pipeLen = 1.0;
-            float factor = uDeltaTime * pipeArea * g / pipeLen;
-
-            float fL = max(0.0, flux.r + factor * (hCenter - hL));
-            float fR = max(0.0, flux.g + factor * (hCenter - hR));
-            float fT = max(0.0, flux.b + factor * (hCenter - hT));
-            float fB = max(0.0, flux.a + factor * (hCenter - hB));
-
-            float totalFlux = (fL + fR + fT + fB) * uDeltaTime;
-            if (totalFlux > 0.0) {
-                float scale = min(1.0, (d * 1.0) / totalFlux);
-                fL *= scale; fR *= scale; fT *= scale; fB *= scale;
+            vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+            float snoise(vec2 v){
+                const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                                   -0.577350269189626, 0.024390243902439);
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1;
+                i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
+                i = mod(i, 289.0);
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+                + i.x + vec3(0.0, i1.x, 1.0 ));
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m;
+                m = m*m;
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                vec3 g;
+                g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
             }
 
-            fragColor = vec4(fL, fR, fT, fB);
-        }`;
-
-        // 4. Shader de Erosão e Deposição Hidráulica
-        const erosionShader = `#version 300 es
-        precision highp float;
-        in vec2 vUv;
-        uniform sampler2D uTerrain;
-        uniform sampler2D uFlux;
-        uniform vec2 uTexelSize;
-        uniform float uDeltaTime;
-        uniform float uErosRate;
-        uniform float uDepRate;
-        uniform float uEvapRate;
-        uniform float uUpliftRate;
-        out vec4 fragColor;
-
-        void main() {
-            vec4 t = texture(uTerrain, vUv);
-            vec4 f = texture(uFlux, vUv);
-
-            float fInL = texture(uFlux, vUv + vec2(-uTexelSize.x, 0.0)).g;
-            float fInR = texture(uFlux, vUv + vec2( uTexelSize.x, 0.0)).r;
-            float fInT = texture(uFlux, vUv + vec2(0.0,  uTexelSize.y)).a;
-            float fInB = texture(uFlux, vUv + vec2(0.0, -uTexelSize.y)).b;
-
-            float netVolume = (fInL + fInR + fInT + fInB - (f.r + f.g + f.b + f.a)) * uDeltaTime;
-            float dNew = max(0.0, t.b + netVolume);
-
-            // Vetor velocidade do fluxo
-            float u = (fInL - f.r + f.g - fInR) * 0.5;
-            float v = (fInB - f.a + f.b - fInT) * 0.5;
-            float vel = length(vec2(u, v));
-
-            // Gradiente/Declividade local
-            float hL = texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).r + texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).g;
-            float hR = texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).r + texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).g;
-            float hT = texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).r + texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).g;
-            float hB = texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).r + texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).g;
-            float slope = length(vec2(hR - hL, hT - hB));
-
-            // Capacidade de transporte de sedimento
-            float capacity = max(0.0, vel * sin(atan(slope)) * min(dNew, 1.0));
-            
-            float regolith = t.g;
-            float sediment = t.a;
-            float bedrock = t.r + uUpliftRate * uDeltaTime; // Soerguimento endógeno
-
-            if (capacity > sediment) {
-                float eroded = uErosRate * (capacity - sediment);
-                float actualEroded = min(eroded, regolith);
-                regolith -= actualEroded;
-                sediment += actualEroded;
-            } else {
-                float deposited = uDepRate * (sediment - capacity);
-                regolith += deposited;
-                sediment -= deposited;
+            float fbm(vec2 p) {
+                float val = 0.0;
+                float amp = 0.5;
+                for(int i=0; i<5; i++) {
+                    val += amp * snoise(p);
+                    p *= 2.02;
+                    amp *= 0.5;
+                }
+                return val;
             }
 
-            // Evaporação
-            dNew *= (1.0 - uEvapRate * uDeltaTime);
+            void main() {
+                vec2 st = vUv * 3.0;
+                float h = fbm(st) * 0.5 + 0.5;
+                h = pow(h, 1.8);
+                
+                float bedrock = h * 0.8;
+                float regolith = h * 0.2;
+                float water = 0.0;
+                float sediment = 0.0;
 
-            fragColor = vec4(bedrock, max(0.0, regolith), max(0.0, dNew), max(0.0, sediment));
-        }`;
-
-        // 5. Shader de Desmoronamento Térmico (Ângulo de Repouso)
-        const thermalShader = `#version 300 es
-        precision highp float;
-        in vec2 vUv;
-        uniform sampler2D uTerrain;
-        uniform vec2 uTexelSize;
-        uniform float uMaxSlope;
-        out vec4 fragColor;
-
-        void main() {
-            vec4 t = texture(uTerrain, vUv);
-            float hCell = t.r + t.g;
-
-            vec2 offsets[4] = vec2[](
-                vec2(-uTexelSize.x, 0.0), vec2(uTexelSize.x, 0.0),
-                vec2(0.0, uTexelSize.y), vec2(0.0, -uTexelSize.y)
-            );
-
-            float maxDiff = 0.0;
-            for(int i=0; i<4; i++) {
-                vec4 n = texture(uTerrain, vUv + offsets[i]);
-                float hN = n.r + n.g;
-                float diff = hCell - hN;
-                if(diff > maxDiff) maxDiff = diff;
+                gl_FragColor = vec4(bedrock, regolith, water, sediment);
             }
+        `;
 
-            float regolith = t.g;
-            if (maxDiff > uMaxSlope && regolith > 0.0) {
-                float move = 0.5 * (maxDiff - uMaxSlope);
-                regolith -= min(move, regolith);
+        const fluxShader = `
+            varying vec2 vUv;
+            uniform sampler2D uTerrain;
+            uniform sampler2D uFlux;
+            uniform vec2 uTexelSize;
+            uniform float uRainRate;
+            uniform float uDeltaTime;
+
+            void main() {
+                vec4 t = texture2D(uTerrain, vUv);
+                float b = t.r;
+                float r = t.g;
+                float d = t.b + uRainRate * uDeltaTime;
+                float hCenter = b + r + d;
+
+                vec4 flux = texture2D(uFlux, vUv);
+
+                vec4 tL = texture2D(uTerrain, vUv + vec2(-uTexelSize.x, 0.0));
+                vec4 tR = texture2D(uTerrain, vUv + vec2( uTexelSize.x, 0.0));
+                vec4 tT = texture2D(uTerrain, vUv + vec2(0.0,  uTexelSize.y));
+                vec4 tB = texture2D(uTerrain, vUv + vec2(0.0, -uTexelSize.y));
+
+                float hL = tL.r + tL.g + tL.b;
+                float hR = tR.r + tR.g + tR.b;
+                float hT = tT.r + tT.g + tT.b;
+                float hB = tB.r + tB.g + tB.b;
+
+                float g = 9.81;
+                float pipeArea = 1.0;
+                float pipeLen = 1.0;
+                float factor = uDeltaTime * pipeArea * g / pipeLen;
+
+                float fL = max(0.0, flux.r + factor * (hCenter - hL));
+                float fR = max(0.0, flux.g + factor * (hCenter - hR));
+                float fT = max(0.0, flux.b + factor * (hCenter - hT));
+                float fB = max(0.0, flux.a + factor * (hCenter - hB));
+
+                float totalFlux = (fL + fR + fT + fB) * uDeltaTime;
+                if (totalFlux > 0.0) {
+                    float scale = min(1.0, d / totalFlux);
+                    fL *= scale; fR *= scale; fT *= scale; fB *= scale;
+                }
+
+                gl_FragColor = vec4(fL, fR, fT, fB);
             }
+        `;
 
-            fragColor = vec4(t.r, max(0.0, regolith), t.b, t.a);
-        }`;
+        const erosionShader = `
+            varying vec2 vUv;
+            uniform sampler2D uTerrain;
+            uniform sampler2D uFlux;
+            uniform vec2 uTexelSize;
+            uniform float uDeltaTime;
+            uniform float uErosRate;
+            uniform float uDepRate;
+            uniform float uEvapRate;
+            uniform float uUpliftRate;
 
-        // 6. Shader de Renderização 3D do Terreno (Vertex + Fragment com Biomas)
-        const terrainRenderVS = `#version 300 es
-        precision highp float;
-        uniform sampler2D uTerrain;
-        uniform vec2 uTexelSize;
-        out vec2 vUv;
-        out vec3 vNormal;
-        out vec3 vWorldPos;
-        out vec4 vTerrainData;
+            void main() {
+                vec4 t = texture2D(uTerrain, vUv);
+                vec4 f = texture2D(uFlux, vUv);
 
-        void main() {
-            vUv = uv;
-            vec4 data = texture(uTerrain, uv);
-            vTerrainData = data;
+                float fInL = texture2D(uFlux, vUv + vec2(-uTexelSize.x, 0.0)).g;
+                float fInR = texture2D(uFlux, vUv + vec2( uTexelSize.x, 0.0)).r;
+                float fInT = texture2D(uFlux, vUv + vec2(0.0,  uTexelSize.y)).a;
+                float fInB = texture2D(uFlux, vUv + vec2(0.0, -uTexelSize.y)).b;
 
-            float totalHeight = data.r + data.g + data.b;
-            vec3 pos = position;
-            pos.z = totalHeight * 40.0; // Escala de altura 3D
+                float netVolume = (fInL + fInR + fInT + fInB - (f.r + f.g + f.b + f.a)) * uDeltaTime;
+                float dNew = max(0.0, t.b + netVolume);
 
-            // Cálculo das normais diretamente no Vertex Shader
-            float hL = texture(uTerrain, uv + vec2(-uTexelSize.x, 0.0)).r + texture(uTerrain, uv + vec2(-uTexelSize.x, 0.0)).g + texture(uTerrain, uv + vec2(-uTexelSize.x, 0.0)).b;
-            float hR = texture(uTerrain, uv + vec2( uTexelSize.x, 0.0)).r + texture(uTerrain, uv + vec2( uTexelSize.x, 0.0)).g + texture(uTerrain, uv + vec2( uTexelSize.x, 0.0)).b;
-            float hB = texture(uTerrain, uv + vec2(0.0, -uTexelSize.y)).r + texture(uTerrain, uv + vec2(0.0, -uTexelSize.y)).g + texture(uTerrain, uv + vec2(0.0, -uTexelSize.y)).b;
-            float hT = texture(uTerrain, uv + vec2(0.0,  uTexelSize.y)).r + texture(uTerrain, uv + vec2(0.0,  uTexelSize.y)).g + texture(uTerrain, uv + vec2(0.0,  uTexelSize.y)).b;
+                float uVel = (fInL - f.r + f.g - fInR) * 0.5;
+                float vVel = (fInB - f.a + f.b - fInT) * 0.5;
+                float vel = length(vec2(uVel, vVel));
 
-            vec3 normal = normalize(vec3((hL - hR) * 40.0, (hB - hT) * 40.0, 2.0));
-            vNormal = normalMatrix * normal;
+                vec4 tL = texture2D(uTerrain, vUv + vec2(-uTexelSize.x, 0.0));
+                vec4 tR = texture2D(uTerrain, vUv + vec2( uTexelSize.x, 0.0));
+                vec4 tT = texture2D(uTerrain, vUv + vec2(0.0,  uTexelSize.y));
+                vec4 tB = texture2D(uTerrain, vUv + vec2(0.0, -uTexelSize.y));
 
-            vec4 worldPosition = modelMatrix * vec4(pos, 1.0);
-            vWorldPos = worldPosition.xyz;
-            gl_Position = projectionMatrix * viewMatrix * worldPosition;
-        }`;
+                float hL = tL.r + tL.g;
+                float hR = tR.r + tR.g;
+                float hT = tT.r + tT.g;
+                float hB = tB.r + tB.g;
+                float slope = length(vec2(hR - hL, hT - hB));
 
-        const terrainRenderFS = `#version 300 es
-        precision highp float;
-        in vec2 vUv;
-        in vec3 vNormal;
-        in vec3 vWorldPos;
-        in vec4 vTerrainData;
+                float capacity = max(0.0, vel * sin(atan(slope)) * min(dNew, 1.0));
+                
+                float regolith = t.g;
+                float sediment = t.a;
+                float bedrock = t.r + uUpliftRate * uDeltaTime;
 
-        out vec4 fragColor;
+                if (capacity > sediment) {
+                    float eroded = uErosRate * (capacity - sediment);
+                    float actualEroded = min(eroded, regolith);
+                    regolith -= actualEroded;
+                    sediment += actualEroded;
+                } else {
+                    float deposited = uDepRate * (sediment - capacity);
+                    regolith += deposited;
+                    sediment -= deposited;
+                }
 
-        void main() {
-            float bedrock = vTerrainData.r;
-            float regolith = vTerrainData.g;
-            float water = vTerrainData.b;
+                dNew *= (1.0 - uEvapRate * uDeltaTime);
 
-            vec3 N = normalize(vNormal);
-            vec3 L = normalize(vec3(0.5, 0.8, 1.0)); // Luz solar
-            float diff = max(dot(N, L), 0.2);
-
-            float slope = 1.0 - N.z; // Inclinação
-            float alt = vWorldPos.z;
-
-            // Cores do Terreno / Biomas
-            vec3 cBedrock = vec3(0.35, 0.32, 0.30); // Rocha Cinza
-            vec3 cRegolith = vec3(0.70, 0.55, 0.35); // Areia/Sedimento
-            vec3 cGrass = vec3(0.20, 0.55, 0.15); // Vegetação/Grama
-            vec3 cSnow = vec3(0.95, 0.95, 0.98); // Neve em topo
-            vec3 cWater = vec3(0.05, 0.45, 0.85); // Água Fluindo
-
-            // Zoneamento Ecológico Dinâmico
-            vec3 landColor = mix(cGrass, cRegolith, smoothstep(0.05, 0.2, regolith));
-            if (slope > 0.4) landColor = cBedrock;
-            if (alt > 25.0) landColor = mix(landColor, cSnow, smoothstep(25.0, 32.0, alt));
-
-            vec3 finalColor = landColor * diff;
-
-            // Renderização da Lâmina d'Água
-            if (water > 0.001) {
-                float waterAlpha = smoothstep(0.0, 0.1, water) * 0.75;
-                finalColor = mix(finalColor, cWater * (diff + 0.3), waterAlpha);
+                gl_FragColor = vec4(bedrock, max(0.0, regolith), max(0.0, dNew), max(0.0, sediment));
             }
+        `;
 
-            fragColor = vec4(finalColor, 1.0);
-        }`;
+        const thermalShader = `
+            varying vec2 vUv;
+            uniform sampler2D uTerrain;
+            uniform vec2 uTexelSize;
+            uniform float uMaxSlope;
 
-        // --- ENGINES E GERENCIAMENTO DE GPU / THREE.JS ---
+            void main() {
+                vec4 t = texture2D(uTerrain, vUv);
+                float hCell = t.r + t.g;
+
+                float hL = texture2D(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).r + texture2D(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).g;
+                float hR = texture2D(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).r + texture2D(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).g;
+                float hT = texture2D(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).r + texture2D(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).g;
+                float hB = texture2D(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).r + texture2D(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).g;
+
+                float maxDiff = max(max(hCell - hL, hCell - hR), max(hCell - hT, hCell - hB));
+
+                float regolith = t.g;
+                if (maxDiff > uMaxSlope && regolith > 0.0) {
+                    float move = 0.5 * (maxDiff - uMaxSlope);
+                    regolith -= min(move, regolith);
+                }
+
+                gl_FragColor = vec4(t.r, max(0.0, regolith), t.b, t.a);
+            }
+        `;
+
+        const terrainRenderVS = `
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vWorldPos;
+            varying vec4 vTerrainData;
+
+            uniform sampler2D uTerrain;
+            uniform vec2 uTexelSize;
+
+            void main() {
+                vUv = uv;
+                vec4 data = texture2D(uTerrain, uv);
+                vTerrainData = data;
+
+                float totalHeight = data.r + data.g + data.b;
+                vec3 pos = position;
+                pos.z = totalHeight * 30.0;
+
+                vec4 tL = texture2D(uTerrain, uv + vec2(-uTexelSize.x, 0.0));
+                vec4 tR = texture2D(uTerrain, uv + vec2( uTexelSize.x, 0.0));
+                vec4 tB = texture2D(uTerrain, uv + vec2(0.0, -uTexelSize.y));
+                vec4 tT = texture2D(uTerrain, uv + vec2(0.0,  uTexelSize.y));
+
+                float hL = tL.r + tL.g + tL.b;
+                float hR = tR.r + tR.g + tR.b;
+                float hB = tB.r + tB.g + tB.b;
+                float hT = tT.r + tT.g + tT.b;
+
+                vec3 norm = normalize(vec3((hL - hR) * 30.0, (hB - hT) * 30.0, 2.0));
+                vNormal = normalMatrix * norm;
+
+                vec4 worldPosition = modelMatrix * vec4(pos, 1.0);
+                vWorldPos = worldPosition.xyz;
+                gl_Position = projectionMatrix * viewMatrix * worldPosition;
+            }
+        `;
+
+        const terrainRenderFS = `
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vWorldPos;
+            varying vec4 vTerrainData;
+
+            void main() {
+                float bedrock = vTerrainData.r;
+                float regolith = vTerrainData.g;
+                float water = vTerrainData.b;
+
+                vec3 N = normalize(vNormal);
+                vec3 L = normalize(vec3(0.5, 0.8, 1.0));
+                float diff = max(dot(N, L), 0.25);
+
+                float slope = 1.0 - N.z;
+                float alt = vWorldPos.z;
+
+                vec3 cBedrock = vec3(0.40, 0.36, 0.32);
+                vec3 cRegolith = vec3(0.72, 0.58, 0.38);
+                vec3 cGrass = vec3(0.22, 0.52, 0.18);
+                vec3 cSnow = vec3(0.95, 0.95, 0.98);
+                vec3 cWater = vec3(0.08, 0.48, 0.88);
+
+                vec3 landColor = mix(cGrass, cRegolith, smoothstep(0.05, 0.25, regolith));
+                if (slope > 0.35) landColor = cBedrock;
+                if (alt > 20.0) landColor = mix(landColor, cSnow, smoothstep(20.0, 28.0, alt));
+
+                vec3 finalColor = landColor * diff;
+
+                if (water > 0.001) {
+                    float waterAlpha = smoothstep(0.0, 0.08, water) * 0.8;
+                    finalColor = mix(finalColor, cWater * (diff + 0.3), waterAlpha);
+                }
+
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+
+        // --- ENGINES E PIPELINE DE RENDERIZAÇÃO GPGPU ---
 
         let scene, camera, renderer, controls;
-        let simMesh, terrainMesh, terrainGeo, terrainMat;
+        let terrainMesh, terrainGeo, terrainMat;
         let simRes = 128;
         let isRunning = true;
+        let floatType = THREE.FloatType;
 
         let fboTerrainA, fboTerrainB, fboFluxA, fboFluxB;
         let fluxMaterial, erosionMaterial, thermalMaterial;
+        let simScene, simCam, simQuad;
 
         const clock = new THREE.Clock();
 
@@ -392,7 +384,7 @@
                 minFilter: THREE.NearestFilter,
                 magFilter: THREE.NearestFilter,
                 format: THREE.RGBAFormat,
-                type: THREE.FloatType,
+                type: floatType,
                 depthBuffer: false,
                 stencilBuffer: false
             });
@@ -401,27 +393,49 @@
         function initApp() {
             const container = document.getElementById('canvas-container');
 
-            // 1. Cena Three.js
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0d1117);
-
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, -90, 70);
-
+            // 1. Inicializar Renderizador
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
 
+            // 2. Detecção e Suporte de Extensões de GPU
+            const gl = renderer.getContext();
+            if (!gl.getExtension('EXT_color_buffer_float')) {
+                console.warn('EXT_color_buffer_float não suportado. Revertendo para HalfFloatType.');
+                floatType = THREE.HalfFloatType;
+            }
+            gl.getExtension('OES_texture_float_linear');
+            gl.getExtension('OES_texture_half_float_linear');
+
+            // 3. Configurar Cena 3D Principal
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0d1117);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 80, 90);
+
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.maxPolarAngle = Math.PI / 2 - 0.05;
+            controls.target.set(0, 0, 0);
 
-            // 2. Inicialização dos FBOs Ping-Pong
+            // 4. Quad de Processamento GPGPU
+            simScene = new THREE.Scene();
+            simCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            
+            const quadGeo = new THREE.BufferGeometry();
+            const vertices = new Float32Array([-1, -1, 0,  1, -1, 0,  1,  1, 0, -1, -1, 0,  1,  1, 0, -1,  1, 0]);
+            const uvs = new Float32Array([0, 0,  1, 0,  1, 1,  0, 0,  1, 1,  0, 1]);
+            quadGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            quadGeo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+            simQuad = new THREE.Mesh(quadGeo, new THREE.MeshBasicMaterial());
+            simScene.add(simQuad);
+
+            // 5. Configurar Simulação e Malha
             setupSimulation();
 
-            // 3. Criar Malha 3D Visível do Terreno
-            terrainGeo = new THREE.PlaneBufferGeometry(100, 100, simRes - 1, simRes - 1);
+            terrainGeo = new THREE.PlaneGeometry(100, 100, simRes - 1, simRes - 1);
             terrainMat = new THREE.ShaderMaterial({
                 vertexShader: terrainRenderVS,
                 fragmentShader: terrainRenderFS,
@@ -433,18 +447,14 @@
             });
 
             terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+            terrainMesh.rotation.x = -Math.PI / 2; // Orientar no plano horizontal
             scene.add(terrainMesh);
 
-            // Light Ambient Helper
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-
-            // Resize Event
+            // Eventos
             window.addEventListener('resize', onWindowResize);
-
-            // Bind de Eventos UI
             setupUI();
 
-            // Loop de Renderização
+            // Loop principal
             animate();
         }
 
@@ -454,27 +464,26 @@
             fboFluxA = createFBO(simRes);
             fboFluxB = createFBO(simRes);
 
-            // Cena Ortográfica Invisível para Processamento GPGPU
-            const simScene = new THREE.Scene();
-            const simCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-            const simGeo = new THREE.PlaneBufferGeometry(2, 2);
+            // Limpeza inicial dos FBOs de fluxo
+            renderer.setRenderTarget(fboFluxA);
+            renderer.clear();
+            renderer.setRenderTarget(fboFluxB);
+            renderer.clear();
 
-            // Material 1: Inicialização
+            // Pass de Inicialização do Terreno
             const initMat = new THREE.ShaderMaterial({
                 vertexShader: quadVertexShader,
                 fragmentShader: initTerrainShader
             });
-            simMesh = new THREE.Mesh(simGeo, initMat);
-            simScene.add(simMesh);
+            simQuad.material = initMat;
 
-            // Executa Pass de Inicialização do Terreno
             renderer.setRenderTarget(fboTerrainA);
             renderer.render(simScene, simCam);
             renderer.setRenderTarget(fboTerrainB);
             renderer.render(simScene, simCam);
             renderer.setRenderTarget(null);
 
-            // Materiais de Simulação
+            // Materiais GPGPU
             const texel = new THREE.Vector2(1 / simRes, 1 / simRes);
 
             fluxMaterial = new THREE.ShaderMaterial({
@@ -518,36 +527,36 @@
         function stepSimulation(dt) {
             if (!isRunning) return;
 
-            const simCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-            const simScene = new THREE.Scene();
-            const simGeo = new THREE.PlaneBufferGeometry(2, 2);
-            const quad = new THREE.Mesh(simGeo, fluxMaterial);
-            simScene.add(quad);
-
-            // Passo A: Hidrodinâmica e Fluxo
+            // Step 1: Hidrodinâmica
+            simQuad.material = fluxMaterial;
             fluxMaterial.uniforms.uTerrain.value = fboTerrainA.texture;
             fluxMaterial.uniforms.uFlux.value = fboFluxA.texture;
             fluxMaterial.uniforms.uDeltaTime.value = dt;
             renderer.setRenderTarget(fboFluxB);
             renderer.render(simScene, simCam);
 
-            // Passo B: Erosão e Deposição
-            quad.material = erosionMaterial;
+            // Step 2: Erosão e Deposição
+            simQuad.material = erosionMaterial;
             erosionMaterial.uniforms.uTerrain.value = fboTerrainA.texture;
             erosionMaterial.uniforms.uFlux.value = fboFluxB.texture;
             erosionMaterial.uniforms.uDeltaTime.value = dt;
             renderer.setRenderTarget(fboTerrainB);
             renderer.render(simScene, simCam);
 
-            // Passo C: Desmoronamento Térmico
-            quad.material = thermalMaterial;
+            // Step 3: Desmoronamento Térmico
+            simQuad.material = thermalMaterial;
             thermalMaterial.uniforms.uTerrain.value = fboTerrainB.texture;
             renderer.setRenderTarget(fboTerrainA);
             renderer.render(simScene, simCam);
 
+            // Swap Flux Ping-Pong
+            const tempFlux = fboFluxA;
+            fboFluxA = fboFluxB;
+            fboFluxB = tempFlux;
+
             renderer.setRenderTarget(null);
 
-            // Atualiza Uniforme de Renderização
+            // Atualizar textura do terreno
             terrainMat.uniforms.uTerrain.value = fboTerrainA.texture;
         }
 
@@ -561,7 +570,6 @@
             controls.update();
             renderer.render(scene, camera);
 
-            // Estatísticas
             frameCount++;
             const now = performance.now();
             if (now - lastTime >= 1000) {
@@ -577,7 +585,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- BIND DE CONTROLES E INTERFACE DE USUÁRIO ---
         function setupUI() {
             const bindInput = (id, targetObj, key, transform = v => parseFloat(v), displayFn = null) => {
                 const el = document.getElementById(id);
@@ -605,14 +612,18 @@
                 document.getElementById('res-val').innerText = `${simRes} x ${simRes}`;
                 document.getElementById('cell-count').innerText = simRes * simRes;
 
-                // Reconstruir geometria e FBOs
                 scene.remove(terrainMesh);
                 terrainGeo.dispose();
-                terrainGeo = new THREE.PlaneBufferGeometry(100, 100, simRes - 1, simRes - 1);
-                terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-                scene.add(terrainMesh);
-
+                terrainGeo = new THREE.PlaneGeometry(100, 100, simRes - 1, simRes - 1);
+                
                 setupSimulation();
+
+                terrainMat.uniforms.uTerrain.value = fboTerrainA.texture;
+                terrainMat.uniforms.uTexelSize.value.set(1 / simRes, 1 / simRes);
+
+                terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+                terrainMesh.rotation.x = -Math.PI / 2;
+                scene.add(terrainMesh);
             });
 
             document.getElementById('btn-toggle').addEventListener('click', (e) => {
@@ -622,6 +633,7 @@
 
             document.getElementById('btn-reset').addEventListener('click', () => {
                 setupSimulation();
+                terrainMat.uniforms.uTerrain.value = fboTerrainA.texture;
             });
 
             document.getElementById('btn-wireframe').addEventListener('click', () => {
