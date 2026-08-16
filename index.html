@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeoSim 3D - Simulador Geológico Calibrado</title>
+  <title>GeoSim 3D - Ravinamento e Escoamento Linear</title>
   <style>
     :root {
       --bg-panel: rgba(15, 23, 42, 0.94);
@@ -176,7 +176,7 @@
   <div id="ui-panel">
     <div class="header-title">
       <h2>GeoSim 3D Pro</h2>
-      <span class="badge" id="simStatus">Ativo</span>
+      <span class="badge" id="simStatus">Ravinamento</span>
     </div>
 
     <!-- Rotação do Terreno -->
@@ -194,8 +194,8 @@
     <div class="section-title">Modelagem do Relevo</div>
     <div class="control-group">
       <select id="presetSelect">
-        <option value="cordilheira">Cordilheira com Cristas & Vales</option>
-        <option value="chapada">Chapada / Planalto Tabular</option>
+        <option value="cordilheira">Cordilheira com Cristas & Ravinas</option>
+        <option value="chapada">Chapada / Planalto com Escarpas</option>
         <option value="depressao">Depressão / Bacia Fechada</option>
         <option value="planicie">Planície Aluvial & Meandros</option>
         <option value="dunas">Campo de Dunas Eólicas</option>
@@ -212,26 +212,26 @@
       <input type="range" id="verticalScale" min="10" max="100" step="1" value="45">
     </div>
 
-    <!-- Agente Hidrológico -->
+    <!-- Dinâmica Hidrológica & Ravinamento -->
     <div class="section-title">
-      Hidrologia & Chuva
-      <span style="color:#38bdf8; text-transform:none; font-size:10px;">Calibrada</span>
+      Ravinamento & Sedimentos
+      <span style="color:#38bdf8; text-transform:none; font-size:10px;">Linear</span>
     </div>
     <div class="btn-row">
       <button id="btnToggleRain" class="active">Chuva: ON</button>
-      <button id="btnDrainWater" class="secondary">Drenar Bacias</button>
+      <button id="btnDrainWater" class="secondary">Limpar Fluxo</button>
     </div>
     <div class="control-group" style="margin-top: 6px;">
-      <label>Gotas/Frame: <span id="rainVal">120</span></label>
-      <input type="range" id="rainIntensity" min="20" max="500" step="20" value="120">
+      <label>Gotas/Frame: <span id="rainVal">180</span></label>
+      <input type="range" id="rainIntensity" min="30" max="600" step="30" value="180">
     </div>
     <div class="control-group">
-      <label>Taxa de Erosão: <span id="erosionVal">0.12</span></label>
-      <input type="range" id="erosionRate" min="0.02" max="0.50" step="0.02" value="0.12">
+      <label>Escavação Linear (Ravinas): <span id="erosionVal">0.24</span></label>
+      <input type="range" id="erosionRate" min="0.04" max="0.60" step="0.02" value="0.24">
     </div>
     <div class="control-group">
-      <label>Taxa de Deposição: <span id="depoVal">0.10</span></label>
-      <input type="range" id="depoRate" min="0.02" max="0.40" step="0.02" value="0.10">
+      <label>Deposição de Sedimentos: <span id="depoVal">0.18</span></label>
+      <input type="range" id="depoRate" min="0.04" max="0.50" step="0.02" value="0.18">
     </div>
 
     <!-- Agente Eólico -->
@@ -255,15 +255,16 @@
       <select id="brushMode">
         <option value="raise">Elevar (Soerguimento)</option>
         <option value="lower">Escavar (Subsidência)</option>
-        <option value="water">Adicionar Nascente Pontual</option>
+        <option value="water">Nascente Concentrada (Ravina)</option>
         <option value="smooth">Suavizar Encostas</option>
       </select>
     </div>
     <input type="range" id="brushRadius" min="6" max="50" value="20">
 
     <div class="hint">
-      • <b>Canais Fluviais Reais:</b> A água só aparece nos leitos e vales por convergência de fluxo.<br>
-      • <b>Evolução Gradual:</b> Erosão realista sem colapso abrupto das montanhas.
+      • <b>Ravinas:</b> Canais azuis nítidos descem pelas encostas.<br>
+      • <b>Sedimentos:</b> Áreas arenosas em tom ocre/amarelo se acumulam nos vales e sopé.<br>
+      • <b>Chuva:</b> Linhas de precipitação claramente visíveis.
     </div>
   </div>
 
@@ -276,25 +277,26 @@
     const WORLD_SIZE = 220;
     const CELL_SIZE = WORLD_SIZE / (GRID_SIZE - 1);
 
-    // Buffers Topográficos & Hidrológicos
+    // Buffers Topográficos, Hidrológicos e Sedimentares
     const terrainHeight = new Float32Array(GRID_SIZE * GRID_SIZE);
-    const flowAccumulation = new Float32Array(GRID_SIZE * GRID_SIZE); // Rede de drenagem / canais
+    const waterFlowTrail = new Float32Array(GRID_SIZE * GRID_SIZE);  // Filetes lineares e escoamento
+    const sedimentLayer = new Float32Array(GRID_SIZE * GRID_SIZE);   // Camada de areia/sedimento depositado
     const rawNormalized = new Float32Array(GRID_SIZE * GRID_SIZE);
 
     let maxVerticalElevation = 45.0;
 
-    // Configurações Físicas Calibradas
+    // Configurações Físicas
     const config = {
       simRunning: true,
-      rainDrops: 120,          // Menos gotas por frame para taxa estável
-      erosionSpeed: 0.12,       // Erosão suave e geomorfológica
-      depositSpeed: 0.10,
-      inertia: 0.15,
-      capacityFactor: 3.0,
-      minCapacity: 0.02,
-      evaporationRate: 0.035,
-      gravity: 4.0,
-      maxLifetime: 30,
+      rainDrops: 180,
+      erosionSpeed: 0.24,
+      depositSpeed: 0.18,
+      inertia: 0.22,           // Inércia que gera meandros e canais contínuos
+      capacityFactor: 3.8,
+      minCapacity: 0.03,
+      evaporationRate: 0.025,
+      gravity: 4.5,
+      maxLifetime: 40,
       windEnabled: true,
       windAngle: 45 * Math.PI / 180,
       windSpeed: 0.25,
@@ -321,7 +323,7 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.mouseButtons = {
-      LEFT: THREE.MOUSE.NONE, // Escultura manual
+      LEFT: THREE.MOUSE.NONE, // Reservado para esculpir
       MIDDLE: THREE.MOUSE.DOLLY,
       RIGHT: THREE.MOUSE.ROTATE
     };
@@ -361,45 +363,46 @@
     terrainMesh.castShadow = true;
     terrainGroup.add(terrainMesh);
 
-    // --- Partículas de Chuva Finas e Delicadas ---
-    const RAIN_COUNT = 4000;
-    const rainGeo = new THREE.BufferGeometry();
-    const rainPositions = new Float32Array(RAIN_COUNT * 3);
+    // --- Partículas de Chuva em Linhas (Rain Streaks) Visíveis ---
+    const RAIN_COUNT = 1600;
+    const rainPositions = new Float32Array(RAIN_COUNT * 6); // 2 vértices por linha (início e fim)
     const rainVelocities = new Float32Array(RAIN_COUNT);
+    const rainBasePos = [];
 
     for (let i = 0; i < RAIN_COUNT; i++) {
-      rainPositions[i * 3] = (Math.random() - 0.5) * WORLD_SIZE;
-      rainPositions[i * 3 + 1] = 15 + Math.random() * 85;
-      rainPositions[i * 3 + 2] = (Math.random() - 0.5) * WORLD_SIZE;
-      rainVelocities[i] = 1.6 + Math.random() * 1.8;
+      const rx = (Math.random() - 0.5) * WORLD_SIZE;
+      const ry = 30 + Math.random() * 80;
+      const rz = (Math.random() - 0.5) * WORLD_SIZE;
+      const vel = 2.0 + Math.random() * 1.8;
+      
+      rainBasePos.push({ x: rx, y: ry, z: rz });
+      rainVelocities[i] = vel;
+
+      // Vértice 0 (topo do traço)
+      rainPositions[i * 6 + 0] = rx;
+      rainPositions[i * 6 + 1] = ry;
+      rainPositions[i * 6 + 2] = rz;
+      // Vértice 1 (fundo do traço - comprimento de ~3.5m)
+      rainPositions[i * 6 + 3] = rx;
+      rainPositions[i * 6 + 4] = ry - 3.5;
+      rainPositions[i * 6 + 5] = rz;
     }
+
+    const rainGeo = new THREE.BufferGeometry();
     rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
 
-    // Partícula fina em formato de traço suave
-    const dropCanvas = document.createElement('canvas');
-    dropCanvas.width = 16; dropCanvas.height = 32;
-    const ctxD = dropCanvas.getContext('2d');
-    const grad = ctxD.createLinearGradient(8, 0, 8, 32);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    grad.addColorStop(0.5, 'rgba(186, 230, 253, 0.7)');
-    grad.addColorStop(1, 'rgba(255, 255, 255, 0.95)');
-    ctxD.fillStyle = grad;
-    ctxD.fillRect(6, 4, 4, 24);
-    const dropTexture = new THREE.CanvasTexture(dropCanvas);
-
-    const rainMat = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 1.3, // Gotas finas e realistas
-      map: dropTexture,
+    const rainMat = new THREE.LineBasicMaterial({
+      color: 0x93c5fd,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.65,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
-    const rainPoints = new THREE.Points(rainGeo, rainMat);
-    scene.add(rainPoints);
 
-    // --- Partículas de Vento (Poeira Fina) ---
+    const rainLines = new THREE.LineSegments(rainGeo, rainMat);
+    scene.add(rainLines);
+
+    // --- Partículas de Vento ---
     const WIND_COUNT = 1000;
     const windGeo = new THREE.BufferGeometry();
     const windPositions = new Float32Array(WIND_COUNT * 3);
@@ -411,7 +414,7 @@
     windGeo.setAttribute('position', new THREE.BufferAttribute(windPositions, 3));
     const windMat = new THREE.PointsMaterial({
       color: 0xfef08a,
-      size: 1.1,
+      size: 1.4,
       transparent: true,
       opacity: 0.35,
       blending: THREE.AdditiveBlending,
@@ -420,7 +423,7 @@
     const windPoints = new THREE.Points(windGeo, windMat);
     scene.add(windPoints);
 
-    // --- Algoritmo Simplex 2D ---
+    // --- Algoritmo Simplex Noise 2D ---
     class Simplex2D {
       constructor() {
         this.p = new Uint8Array(512);
@@ -499,7 +502,7 @@
 
     let simplex = new Simplex2D();
 
-    // --- Atualização da Malha e Hipsometria com Rede de Drenagem ---
+    // --- Atualização da Malha: Hipsometria + Sedimentos + Escoamento em Ravinas ---
     function updateTerrainMesh() {
       const pos = terrainGeo.attributes.position;
       const col = terrainGeo.attributes.color;
@@ -509,11 +512,12 @@
         pos.setY(i, h);
 
         const hNorm = Math.min(1.0, Math.max(0.0, h / maxVerticalElevation));
-        const flow = flowAccumulation[i];
+        const water = waterFlowTrail[i];
+        const sed = sedimentLayer[i];
 
         let r = 0, g = 0, b = 0;
 
-        // Hipsometria Cartográfica de Base
+        // 1. Hipsometria Cartográfica Base
         if (hNorm < 0.22) {
           const t = hNorm / 0.22;
           r = THREE.MathUtils.lerp(0.14, 0.36, t);
@@ -536,13 +540,22 @@
           b = THREE.MathUtils.lerp(0.36, 1.00, t);
         }
 
-        // A água SÓ aparece onde há convergência de fluxo (talvegues reais e lagos)
-        // Limiar de 0.65 garante que encostas fiquem secas e rios apareçam nos fundos
-        if (flow > 0.65) {
-          const streamStrength = Math.min(1.0, (flow - 0.65) / 1.8);
-          r = THREE.MathUtils.lerp(r, 0.08, streamStrength);
-          g = THREE.MathUtils.lerp(g, 0.55, streamStrength);
-          b = THREE.MathUtils.lerp(b, 0.95, streamStrength);
+        // 2. Deposição de Sedimentos (Leque Aluvial / Areia Ocre nas Áreas Baixas)
+        if (sed > 0.05) {
+          const sedT = Math.min(1.0, sed / 0.8);
+          // Tom arenoso ocre/dourado de aluvião
+          r = THREE.MathUtils.lerp(r, 0.82, sedT * 0.85);
+          g = THREE.MathUtils.lerp(g, 0.68, sedT * 0.85);
+          b = THREE.MathUtils.lerp(b, 0.38, sedT * 0.85);
+        }
+
+        // 3. Escoamento Linear de Água (Ravinas e Cursos d'Água Ativos)
+        if (water > 0.08) {
+          const waterT = Math.min(1.0, water / 1.2);
+          // Azul vivo/turquesa brilhante nos canais em fluxo
+          r = THREE.MathUtils.lerp(r, 0.05, waterT);
+          g = THREE.MathUtils.lerp(g, 0.58, waterT);
+          b = THREE.MathUtils.lerp(b, 0.98, waterT);
         }
 
         col.setXYZ(i, r, g, b);
@@ -553,10 +566,11 @@
       terrainGeo.computeVertexNormals();
     }
 
-    // --- Gerador de Presets Geomorfológicos ---
+    // --- Presets Geomorfológicos ---
     function generatePreset(type) {
       const center = GRID_SIZE / 2;
-      flowAccumulation.fill(0);
+      waterFlowTrail.fill(0);
+      sedimentLayer.fill(0);
 
       for (let i = 0; i < GRID_SIZE; i++) {
         for (let j = 0; j < GRID_SIZE; j++) {
@@ -582,7 +596,7 @@
             const innerDetail = simplex.fbm(u * 4.0, v * 4.0, 4) * 0.1;
             normH = Math.max(0.06, rim * 0.75 + innerDetail - 0.22);
             if (normH < 0.16) {
-              flowAccumulation[idx] = (0.16 - normH) * 15.0; // Lago apenas no centro da bacia
+              waterFlowTrail[idx] = (0.16 - normH) * 8.0;
             }
           } else if (type === 'planicie') {
             const meander = Math.sin(u * 8.0 + simplex.noise(u * 3, v * 3) * 3.0) * 0.04;
@@ -590,6 +604,7 @@
           } else if (type === 'dunas') {
             const wave1 = Math.sin((u + v * 0.5) * 26.0 + simplex.noise(u * 4, v * 4) * 4.0);
             normH = 0.15 + (Math.max(0, wave1) * 0.2) + simplex.fbm(u * 3, v * 3, 3) * 0.1;
+            sedimentLayer[idx] = 0.8;
           }
 
           rawNormalized[idx] = normH;
@@ -629,16 +644,17 @@
       return { height, gradX, gradZ, valid: true };
     }
 
-    // --- Simulação Hidráulica Calibrada (Erosão Progressiva e Acúmulo de Fluxo) ---
-    function simulateDroplet() {
+    // --- Simulação Hidráulica: Escoamento Linear, Ravinamento e Deposição Aluvial ---
+    function simulateLinearStream() {
       let posX = (Math.random() - 0.5) * (WORLD_SIZE - 6);
       let posZ = (Math.random() - 0.5) * (WORLD_SIZE - 6);
-      let dirX = 0, dirZ = 0, speed = 1.0, water = 1.0, sediment = 0.0;
+      let dirX = 0, dirZ = 0, speed = 1.2, water = 1.0, sediment = 0.0;
 
       for (let step = 0; step < config.maxLifetime; step++) {
         const hg = getHeightAndGradient(posX, posZ);
         if (!hg.valid) break;
 
+        // Inércia com convergência gravitacional para esculpir ravinas contínuas
         dirX = dirX * config.inertia - hg.gradX * (1 - config.inertia);
         dirZ = dirZ * config.inertia - hg.gradZ * (1 - config.inertia);
 
@@ -654,28 +670,33 @@
         if (!nextHg.valid) break;
 
         const deltaH = nextHg.height - hg.height;
-        const capacity = Math.max(-deltaH * speed * water * config.capacityFactor, config.minCapacity);
+        const slope = Math.max(0.01, -deltaH);
+        const capacity = Math.max(slope * speed * water * config.capacityFactor, config.minCapacity);
 
         const gx = Math.round(((posX / WORLD_SIZE) + 0.5) * (GRID_SIZE - 1));
         const gz = Math.round(((posZ / WORLD_SIZE) + 0.5) * (GRID_SIZE - 1));
         const idx = gz * GRID_SIZE + gx;
 
-        // Deposita ou corrói com taxa suave
+        // 1. Marca visualmente a linha do escoamento ativo
+        waterFlowTrail[idx] = Math.min(waterFlowTrail[idx] + 0.22 * water, 2.5);
+
+        // 2. Dinâmica de Erosão / Deposição de Sedimentos
         if (sediment > capacity || deltaH > 0) {
+          // Desaceleração / Áreas Planas e Depressões -> DEPOSIÇÃO DE MATERIAL
           const depositAmount = (deltaH > 0)
             ? Math.min(deltaH, sediment)
             : (sediment - capacity) * config.depositSpeed;
 
           sediment -= depositAmount;
           terrainHeight[idx] += depositAmount;
+          sedimentLayer[idx] = Math.min(sedimentLayer[idx] + depositAmount * 2.5, 1.5);
         } else {
-          const erodeAmount = Math.min((capacity - sediment) * config.erosionSpeed, -deltaH);
+          // Encosta íngreme / Alta velocidade -> ESCAVAÇÃO DE RAVINAS
+          const erodeAmount = Math.min((capacity - sediment) * config.erosionSpeed, slope * 0.5);
           sediment += erodeAmount;
           terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - erodeAmount);
+          sedimentLayer[idx] = Math.max(0.0, sedimentLayer[idx] - erodeAmount * 1.5);
         }
-
-        // Adiciona fluxo progressivo apenas onde a gota realmente trafega
-        flowAccumulation[idx] = Math.min(flowAccumulation[idx] + 0.04 * water, 3.5);
 
         speed = Math.sqrt(Math.max(0, speed * speed + deltaH * config.gravity));
         water *= (1 - config.evaporationRate);
@@ -684,7 +705,67 @@
       }
     }
 
-    // --- Simulação Eólica Calibrada ---
+    // --- Atualização de Chuva (Traços Lineares) e Vento ---
+    function updateVisuals() {
+      // Chuva em Linhas
+      if (config.simRunning) {
+        rainLines.visible = true;
+        const pos = rainGeo.attributes.position.array;
+
+        for (let i = 0; i < RAIN_COUNT; i++) {
+          const b = rainBasePos[i];
+          b.y -= rainVelocities[i];
+
+          // Verifica colisão com o relevo local
+          const hg = getHeightAndGradient(b.x, b.z);
+          const ground = hg.valid ? hg.height : 0;
+
+          if (b.y <= ground) {
+            b.x = (Math.random() - 0.5) * WORLD_SIZE;
+            b.y = 40 + Math.random() * 60;
+            b.z = (Math.random() - 0.5) * WORLD_SIZE;
+          }
+
+          // Topo do traço
+          pos[i * 6 + 0] = b.x;
+          pos[i * 6 + 1] = b.y;
+          pos[i * 6 + 2] = b.z;
+          // Fundo do traço
+          pos[i * 6 + 3] = b.x;
+          pos[i * 6 + 4] = b.y - 3.2;
+          pos[i * 6 + 5] = b.z;
+        }
+        rainGeo.attributes.position.needsUpdate = true;
+      } else {
+        rainLines.visible = false;
+      }
+
+      // Vento
+      if (config.windEnabled && config.windSpeed > 0.05) {
+        windPoints.visible = true;
+        const pos = windGeo.attributes.position.array;
+        const vx = Math.cos(config.windAngle) * config.windSpeed * 2.0;
+        const vz = Math.sin(config.windAngle) * config.windSpeed * 2.0;
+
+        for (let i = 0; i < WIND_COUNT; i++) {
+          pos[i * 3] += vx;
+          pos[i * 3 + 2] += vz;
+          pos[i * 3 + 1] += (Math.random() - 0.5) * 0.2;
+
+          const limit = WORLD_SIZE / 2;
+          if (pos[i * 3] > limit || pos[i * 3] < -limit || pos[i * 3 + 2] > limit || pos[i * 3 + 2] < -limit) {
+            pos[i * 3] = -vx * 30 + (Math.random() - 0.5) * WORLD_SIZE;
+            pos[i * 3 + 1] = 3 + Math.random() * 25;
+            pos[i * 3 + 2] = -vz * 30 + (Math.random() - 0.5) * WORLD_SIZE;
+          }
+        }
+        windGeo.attributes.position.needsUpdate = true;
+      } else {
+        windPoints.visible = false;
+      }
+    }
+
+    // --- Simulação Eólica ---
     function stepWindSimulation() {
       if (!config.windEnabled || config.windSpeed <= 0.01) return;
 
@@ -707,50 +788,9 @@
           if (transport > 0) {
             terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - transport);
             terrainHeight[downIdx] += transport * 0.98;
+            sedimentLayer[downIdx] = Math.min(1.5, sedimentLayer[downIdx] + transport * 2.0);
           }
         }
-      }
-    }
-
-    // --- Partículas Visuais ---
-    function updateVisualParticles() {
-      if (config.simRunning) {
-        rainPoints.visible = true;
-        const pos = rainGeo.attributes.position.array;
-        for (let i = 0; i < RAIN_COUNT; i++) {
-          pos[i * 3 + 1] -= rainVelocities[i];
-          if (pos[i * 3 + 1] <= 0) {
-            pos[i * 3] = (Math.random() - 0.5) * WORLD_SIZE;
-            pos[i * 3 + 1] = 45 + Math.random() * 55;
-            pos[i * 3 + 2] = (Math.random() - 0.5) * WORLD_SIZE;
-          }
-        }
-        rainGeo.attributes.position.needsUpdate = true;
-      } else {
-        rainPoints.visible = false;
-      }
-
-      if (config.windEnabled && config.windSpeed > 0.05) {
-        windPoints.visible = true;
-        const pos = windGeo.attributes.position.array;
-        const vx = Math.cos(config.windAngle) * config.windSpeed * 2.0;
-        const vz = Math.sin(config.windAngle) * config.windSpeed * 2.0;
-
-        for (let i = 0; i < WIND_COUNT; i++) {
-          pos[i * 3] += vx;
-          pos[i * 3 + 2] += vz;
-          pos[i * 3 + 1] += (Math.random() - 0.5) * 0.2;
-
-          const limit = WORLD_SIZE / 2;
-          if (pos[i * 3] > limit || pos[i * 3] < -limit || pos[i * 3 + 2] > limit || pos[i * 3 + 2] < -limit) {
-            pos[i * 3] = -vx * 30 + (Math.random() - 0.5) * WORLD_SIZE;
-            pos[i * 3 + 1] = 3 + Math.random() * 25;
-            pos[i * 3 + 2] = -vz * 30 + (Math.random() - 0.5) * WORLD_SIZE;
-          }
-        }
-        windGeo.attributes.position.needsUpdate = true;
-      } else {
-        windPoints.visible = false;
       }
     }
 
@@ -779,7 +819,7 @@
             } else if (brushMode === 'lower') {
               terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - 1.0 * factor);
             } else if (brushMode === 'water') {
-              flowAccumulation[idx] += 2.0 * factor;
+              waterFlowTrail[idx] += 2.5 * factor; // Nascente de ravina
             } else if (brushMode === 'smooth') {
               const iPrev = Math.max(0, i - 1) * GRID_SIZE + j;
               const iNext = Math.min(GRID_SIZE - 1, i + 1) * GRID_SIZE + j;
@@ -875,11 +915,12 @@
       config.simRunning = !config.simRunning;
       btnToggleRain.innerText = config.simRunning ? 'Chuva: ON' : 'Chuva: OFF';
       btnToggleRain.className = config.simRunning ? 'active' : 'secondary';
-      document.getElementById('simStatus').innerText = config.simRunning ? 'Ativo' : 'Pausado';
+      document.getElementById('simStatus').innerText = config.simRunning ? 'Ravinamento' : 'Pausado';
     });
 
     document.getElementById('btnDrainWater').addEventListener('click', () => {
-      flowAccumulation.fill(0);
+      waterFlowTrail.fill(0);
+      sedimentLayer.fill(0);
       updateTerrainMesh();
     });
 
@@ -943,7 +984,8 @@
             const gray = (data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114) / 255.0;
             rawNormalized[i] = gray;
             terrainHeight[i] = gray * maxVerticalElevation;
-            flowAccumulation[i] = 0;
+            waterFlowTrail[i] = 0;
+            sedimentLayer[i] = 0;
           }
           updateTerrainMesh();
         };
@@ -974,17 +1016,17 @@
       }
 
       if (config.simRunning) {
-        // Gotas calibradas
+        // Escavação linear de ravinas e escoamento
         for (let i = 0; i < config.rainDrops; i++) {
-          simulateDroplet();
+          simulateLinearStream();
         }
 
-        // Dissipação de fluxo nas vertentes (evita inundar montanhas)
+        // Dissipação orgânica dos filetes d'água
         for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-          if (flowAccumulation[i] > 0.01) {
-            flowAccumulation[i] *= 0.985;
+          if (waterFlowTrail[i] > 0.01) {
+            waterFlowTrail[i] *= 0.982;
           } else {
-            flowAccumulation[i] = 0;
+            waterFlowTrail[i] = 0;
           }
         }
 
@@ -992,7 +1034,7 @@
         updateTerrainMesh();
       }
 
-      updateVisualParticles();
+      updateVisuals();
       controls.update();
       renderer.render(scene, camera);
     }
