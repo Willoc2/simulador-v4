@@ -1,1044 +1,635 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeoSim 3D - Ravinamento e Escoamento Linear</title>
-  <style>
-    :root {
-      --bg-panel: rgba(15, 23, 42, 0.94);
-      --border-panel: rgba(255, 255, 255, 0.15);
-      --accent: #38bdf8;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-    }
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: #060913;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      user-select: none;
-      color: var(--text);
-    }
-    #canvas-container {
-      width: 100vw;
-      height: 100vh;
-      display: block;
-    }
-    #ui-panel {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(14px);
-      padding: 14px 16px;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
-      border: 1px solid var(--border-panel);
-      width: 290px;
-      max-height: 94vh;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #334155 transparent;
-      z-index: 10;
-    }
-    #ui-panel::-webkit-scrollbar { width: 5px; }
-    #ui-panel::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    .header-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .header-title h2 {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--accent);
-    }
-    .badge {
-      font-size: 10px;
-      background: #16a34a;
-      color: #f0fdf4;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-weight: 600;
-    }
-    .section-title {
-      font-weight: 700;
-      color: var(--text-muted);
-      margin: 12px 0 6px 0;
-      text-transform: uppercase;
-      font-size: 9.5px;
-      letter-spacing: 0.6px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding-top: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .control-group { margin-bottom: 7px; }
-    label {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 3px;
-      color: #cbd5e1;
-      font-size: 11.5px;
-    }
-    select, input[type="range"], button, .file-btn {
-      width: 100%;
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #f8fafc;
-      padding: 6px 8px;
-      border-radius: 6px;
-      box-sizing: border-box;
-      outline: none;
-      font-size: 11.5px;
-    }
-    input[type="range"] {
-      padding: 0;
-      height: 6px;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-    .btn-row {
-      display: flex;
-      gap: 6px;
-      margin-top: 4px;
-    }
-    button, .file-btn {
-      background: #0284c7;
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 7px 10px;
-      text-align: center;
-      transition: background 0.2s;
-    }
-    button:hover, .file-btn:hover { background: #0369a1; }
-    button.active { background: #16a34a; }
-    button.secondary { background: #334155; color: #cbd5e1; }
-    button.secondary:hover { background: #475569; color: #fff; }
-    .file-input { display: none; }
-    .hint {
-      font-size: 10px;
-      color: #64748b;
-      margin-top: 10px;
-      line-height: 1.4;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding-top: 8px;
-    }
-    #compass {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border-panel);
-      border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      cursor: pointer;
-      z-index: 10;
-      transition: transform 0.2s;
-    }
-    #compass:hover { transform: scale(1.08); }
-    #compass-needle {
-      width: 4px;
-      height: 28px;
-      background: linear-gradient(to bottom, #ef4444 50%, #e2e8f0 50%);
-      border-radius: 2px;
-      transform-origin: center center;
-    }
-  </style>
-  
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Geológico e Ecológico 3D - Leve (WebGL 2.0)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { width: 100vw; height: 100vh; overflow: hidden; background-color: #0d1117; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #c9d1d9; }
+        #canvas-container { width: 100%; height: 100%; display: block; }
+        #ui-panel {
+            position: absolute; top: 12px; left: 12px; width: 320px;
+            background: rgba(22, 27, 34, 0.85); backdrop-filter: blur(8px);
+            border: 1px solid rgba(48, 54, 61, 0.8); border-radius: 8px;
+            padding: 16px; font-size: 13px; max-height: calc(100vh - 24px); overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        h2 { font-size: 15px; color: #58a6ff; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
+        .control-group { margin-bottom: 10px; }
+        label { display: flex; justify-content: space-between; margin-bottom: 4px; font-weight: 500; }
+        span.val { color: #8b949e; }
+        input[type=range] { width: 100%; accent-color: #1f6feb; cursor: pointer; }
+        .btn-group { display: flex; gap: 8px; margin-top: 14px; }
+        button {
+            flex: 1; padding: 8px 12px; background: #238636; border: none; border-radius: 6px;
+            color: #ffffff; font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        button:hover { background: #2ea043; }
+        button.btn-danger { background: #da3633; }
+        button.btn-danger:hover { background: #f85149; }
+        button.btn-sec { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; }
+        button.btn-sec:hover { background: #30363d; }
+        #stats { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); padding: 6px 12px; border-radius: 4px; font-family: monospace; font-size: 11px; }
+    </style>
+    <!-- Carregamento das bibliotecas Three.js e OrbitControls via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
-  <div id="canvas-container"></div>
+    <div id="canvas-container"></div>
 
-  <div id="compass" title="Clique para resetar rotação Norte">
-    <div id="compass-needle"></div>
-  </div>
+    <div id="ui-panel">
+        <h2>Simulador Geológico 3D</h2>
+        
+        <div class="control-group">
+            <label>Resolução da Grelha: <span id="res-val" class="val">128 x 128</span></label>
+            <input type="range" id="sim-res" min="64" max="256" step="64" value="128">
+        </div>
 
-  <div id="ui-panel">
-    <div class="header-title">
-      <h2>GeoSim 3D Pro</h2>
-      <span class="badge" id="simStatus">Ravinamento</span>
+        <div class="control-group">
+            <label>Intensidade da Chuva: <span id="rain-val" class="val">0.010</span></label>
+            <input type="range" id="rain-rate" min="0" max="0.05" step="0.001" value="0.01">
+        </div>
+
+        <div class="control-group">
+            <label>Erodibilidade do Solo: <span id="eros-val" class="val">0.020</span></label>
+            <input type="range" id="eros-rate" min="0.001" max="0.1" step="0.001" value="0.02">
+        </div>
+
+        <div class="control-group">
+            <label>Taxa de Deposição: <span id="dep-val" class="val">0.020</span></label>
+            <input type="range" id="dep-rate" min="0.001" max="0.1" step="0.001" value="0.02">
+        </div>
+
+        <div class="control-group">
+            <label>Evaporação: <span id="evap-val" class="val">0.015</span></label>
+            <input type="range" id="evap-rate" min="0.001" max="0.05" step="0.001" value="0.015">
+        </div>
+
+        <div class="control-group">
+            <label>Ângulo de Repouso (Térmico): <span id="angle-val" class="val">35°</span></label>
+            <input type="range" id="thermal-angle" min="10" max="60" step="1" value="35">
+        </div>
+
+        <div class="control-group">
+            <label>Soerguimento Tectônico: <span id="uplift-val" class="val">0.000</span></label>
+            <input type="range" id="uplift-rate" min="0" max="0.005" step="0.0005" value="0">
+        </div>
+
+        <div class="btn-group">
+            <button id="btn-toggle">Pausar</button>
+            <button id="btn-reset" class="btn-danger">Reiniciar</button>
+        </div>
+        <div class="btn-group">
+            <button id="btn-wireframe" class="btn-sec">Modo Aramado</button>
+        </div>
     </div>
 
-    <!-- Rotação do Terreno -->
-    <div class="section-title">Orientação e Rotação</div>
-    <div class="control-group">
-      <label>Girar Terreno: <span id="rotVal">0°</span></label>
-      <input type="range" id="terrainRotation" min="0" max="360" step="1" value="0">
-    </div>
-    <div class="btn-row">
-      <button id="btnAutoRotate" class="secondary">Auto Giro: OFF</button>
-      <button id="btnResetView" class="secondary">Resetar Visão</button>
-    </div>
+    <div id="stats">FPS: <span id="fps">60</span> | Células: <span id="cell-count">16384</span></div>
 
-    <!-- Presets Geomorfológicos -->
-    <div class="section-title">Modelagem do Relevo</div>
-    <div class="control-group">
-      <select id="presetSelect">
-        <option value="cordilheira">Cordilheira com Cristas & Ravinas</option>
-        <option value="chapada">Chapada / Planalto com Escarpas</option>
-        <option value="depressao">Depressão / Bacia Fechada</option>
-        <option value="planicie">Planície Aluvial & Meandros</option>
-        <option value="dunas">Campo de Dunas Eólicas</option>
-      </select>
-    </div>
-    <div class="btn-row">
-      <label class="file-btn" for="heightmapInput" style="margin:0; font-size:11px;">Upload DEM</label>
-      <input type="file" id="heightmapInput" class="file-input" accept="image/*">
-      <button id="btnRegenerate" class="secondary">Regenerar</button>
-    </div>
+    <script>
+        // --- CÓDIGO GLSL DOS SHADERS GPGPU (WebGL 2.0) ---
 
-    <div class="control-group" style="margin-top: 6px;">
-      <label>Exagero Vertical: <span id="scaleVal">45m</span></label>
-      <input type="range" id="verticalScale" min="10" max="100" step="1" value="45">
-    </div>
+        // 1. Pass-Through Vertex Shader
+        const quadVertexShader = `#version 300 es
+        in vec2 position;
+        out vec2 vUv;
+        void main() {
+            vUv = position * 0.5 + 0.5;
+            gl_Position = vec4(position, 0.0, 1.0);
+        }`;
 
-    <!-- Dinâmica Hidrológica & Ravinamento -->
-    <div class="section-title">
-      Ravinamento & Sedimentos
-      <span style="color:#38bdf8; text-transform:none; font-size:10px;">Linear</span>
-    </div>
-    <div class="btn-row">
-      <button id="btnToggleRain" class="active">Chuva: ON</button>
-      <button id="btnDrainWater" class="secondary">Limpar Fluxo</button>
-    </div>
-    <div class="control-group" style="margin-top: 6px;">
-      <label>Gotas/Frame: <span id="rainVal">180</span></label>
-      <input type="range" id="rainIntensity" min="30" max="600" step="30" value="180">
-    </div>
-    <div class="control-group">
-      <label>Escavação Linear (Ravinas): <span id="erosionVal">0.24</span></label>
-      <input type="range" id="erosionRate" min="0.04" max="0.60" step="0.02" value="0.24">
-    </div>
-    <div class="control-group">
-      <label>Deposição de Sedimentos: <span id="depoVal">0.18</span></label>
-      <input type="range" id="depoRate" min="0.04" max="0.50" step="0.02" value="0.18">
-    </div>
+        // 2. Shader de Inicialização do Terreno (Ruído Fractal Simplex)
+        const initTerrainShader = `#version 300 es
+        precision highp float;
+        in vec2 vUv;
+        out vec4 fragColor;
 
-    <!-- Agente Eólico -->
-    <div class="section-title">Agente Eólico (Vento)</div>
-    <div class="btn-row">
-      <button id="btnToggleWind" class="active">Vento: ON</button>
-    </div>
-    <div class="control-group" style="margin-top: 6px;">
-      <label>Direção do Vento: <span id="windDirVal">45° (NE)</span></label>
-      <input type="range" id="windDirection" min="0" max="360" step="5" value="45">
-    </div>
-    <div class="control-group">
-      <label>Velocidade do Vento: <span id="windSpeedVal">0.25</span></label>
-      <input type="range" id="windSpeed" min="0" max="0.8" step="0.05" value="0.25">
-    </div>
-
-    <!-- Escultura Manual -->
-    <div class="section-title">Escultura Manual (Clique Esquerdo)</div>
-    <div class="control-group">
-      <label>Ação: <span id="brushRadiusVal">Raio 20</span></label>
-      <select id="brushMode">
-        <option value="raise">Elevar (Soerguimento)</option>
-        <option value="lower">Escavar (Subsidência)</option>
-        <option value="water">Nascente Concentrada (Ravina)</option>
-        <option value="smooth">Suavizar Encostas</option>
-      </select>
-    </div>
-    <input type="range" id="brushRadius" min="6" max="50" value="20">
-
-    <div class="hint">
-      • <b>Ravinas:</b> Canais azuis nítidos descem pelas encostas.<br>
-      • <b>Sedimentos:</b> Áreas arenosas em tom ocre/amarelo se acumulam nos vales e sopé.<br>
-      • <b>Chuva:</b> Linhas de precipitação claramente visíveis.
-    </div>
-  </div>
-
-  <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-    // --- Dimensões da Grade Topográfica ---
-    const GRID_SIZE = 128;
-    const WORLD_SIZE = 220;
-    const CELL_SIZE = WORLD_SIZE / (GRID_SIZE - 1);
-
-    // Buffers Topográficos, Hidrológicos e Sedimentares
-    const terrainHeight = new Float32Array(GRID_SIZE * GRID_SIZE);
-    const waterFlowTrail = new Float32Array(GRID_SIZE * GRID_SIZE);  // Filetes lineares e escoamento
-    const sedimentLayer = new Float32Array(GRID_SIZE * GRID_SIZE);   // Camada de areia/sedimento depositado
-    const rawNormalized = new Float32Array(GRID_SIZE * GRID_SIZE);
-
-    let maxVerticalElevation = 45.0;
-
-    // Configurações Físicas
-    const config = {
-      simRunning: true,
-      rainDrops: 180,
-      erosionSpeed: 0.24,
-      depositSpeed: 0.18,
-      inertia: 0.22,           // Inércia que gera meandros e canais contínuos
-      capacityFactor: 3.8,
-      minCapacity: 0.03,
-      evaporationRate: 0.025,
-      gravity: 4.5,
-      maxLifetime: 40,
-      windEnabled: true,
-      windAngle: 45 * Math.PI / 180,
-      windSpeed: 0.25,
-      autoRotate: false
-    };
-
-    // --- Cena, Câmera e Renderizador ---
-    const container = document.getElementById('canvas-container');
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060913);
-    scene.fog = new THREE.FogExp2(0x060913, 0.0022);
-
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 1200);
-    camera.position.set(0, 140, 210);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    container.appendChild(renderer.domElement);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.mouseButtons = {
-      LEFT: THREE.MOUSE.NONE, // Reservado para esculpir
-      MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.ROTATE
-    };
-
-    const terrainGroup = new THREE.Group();
-    scene.add(terrainGroup);
-
-    // --- Iluminação ---
-    scene.add(new THREE.AmbientLight(0xdbeafe, 0.75));
-    const sunLight = new THREE.DirectionalLight(0xfffaed, 2.2);
-    sunLight.position.set(120, 180, 90);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.set(2048, 2048);
-    const d = 130;
-    sunLight.shadow.camera.left = -d;
-    sunLight.shadow.camera.right = d;
-    sunLight.shadow.camera.top = d;
-    sunLight.shadow.camera.bottom = -d;
-    scene.add(sunLight);
-
-    // --- Geometria do Terreno com Vertex Colors ---
-    const terrainGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, GRID_SIZE - 1, GRID_SIZE - 1);
-    terrainGeo.rotateX(-Math.PI / 2);
-
-    const colors = new Float32Array(GRID_SIZE * GRID_SIZE * 3);
-    terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const terrainMat = new THREE.MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.85,
-      metalness: 0.05,
-      flatShading: true
-    });
-
-    const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-    terrainMesh.receiveShadow = true;
-    terrainMesh.castShadow = true;
-    terrainGroup.add(terrainMesh);
-
-    // --- Partículas de Chuva em Linhas (Rain Streaks) Visíveis ---
-    const RAIN_COUNT = 1600;
-    const rainPositions = new Float32Array(RAIN_COUNT * 6); // 2 vértices por linha (início e fim)
-    const rainVelocities = new Float32Array(RAIN_COUNT);
-    const rainBasePos = [];
-
-    for (let i = 0; i < RAIN_COUNT; i++) {
-      const rx = (Math.random() - 0.5) * WORLD_SIZE;
-      const ry = 30 + Math.random() * 80;
-      const rz = (Math.random() - 0.5) * WORLD_SIZE;
-      const vel = 2.0 + Math.random() * 1.8;
-      
-      rainBasePos.push({ x: rx, y: ry, z: rz });
-      rainVelocities[i] = vel;
-
-      // Vértice 0 (topo do traço)
-      rainPositions[i * 6 + 0] = rx;
-      rainPositions[i * 6 + 1] = ry;
-      rainPositions[i * 6 + 2] = rz;
-      // Vértice 1 (fundo do traço - comprimento de ~3.5m)
-      rainPositions[i * 6 + 3] = rx;
-      rainPositions[i * 6 + 4] = ry - 3.5;
-      rainPositions[i * 6 + 5] = rz;
-    }
-
-    const rainGeo = new THREE.BufferGeometry();
-    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
-
-    const rainMat = new THREE.LineBasicMaterial({
-      color: 0x93c5fd,
-      transparent: true,
-      opacity: 0.65,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-
-    const rainLines = new THREE.LineSegments(rainGeo, rainMat);
-    scene.add(rainLines);
-
-    // --- Partículas de Vento ---
-    const WIND_COUNT = 1000;
-    const windGeo = new THREE.BufferGeometry();
-    const windPositions = new Float32Array(WIND_COUNT * 3);
-    for (let i = 0; i < WIND_COUNT; i++) {
-      windPositions[i * 3] = (Math.random() - 0.5) * WORLD_SIZE;
-      windPositions[i * 3 + 1] = 3 + Math.random() * 30;
-      windPositions[i * 3 + 2] = (Math.random() - 0.5) * WORLD_SIZE;
-    }
-    windGeo.setAttribute('position', new THREE.BufferAttribute(windPositions, 3));
-    const windMat = new THREE.PointsMaterial({
-      color: 0xfef08a,
-      size: 1.4,
-      transparent: true,
-      opacity: 0.35,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    const windPoints = new THREE.Points(windGeo, windMat);
-    scene.add(windPoints);
-
-    // --- Algoritmo Simplex Noise 2D ---
-    class Simplex2D {
-      constructor() {
-        this.p = new Uint8Array(512);
-        const perm = new Uint8Array(256);
-        for (let i = 0; i < 256; i++) perm[i] = i;
-        for (let i = 255; i > 0; i--) {
-          const r = Math.floor(Math.random() * (i + 1));
-          const t = perm[i]; perm[i] = perm[r]; perm[r] = t;
-        }
-        for (let i = 0; i < 512; i++) this.p[i] = perm[i & 255];
-      }
-      noise(xin, yin) {
-        const F2 = 0.5 * (Math.sqrt(3.0) - 1.0);
-        const s = (xin + yin) * F2;
-        const i = Math.floor(xin + s);
-        const j = Math.floor(yin + s);
-        const G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
-        const t = (i + j) * G2;
-        const X0 = i - t; const Y0 = j - t;
-        const x0 = xin - X0; const y0 = yin - Y0;
-        const i1 = x0 > y0 ? 1 : 0;
-        const j1 = x0 > y0 ? 0 : 1;
-        const x1 = x0 - i1 + G2;
-        const y1 = y0 - j1 + G2;
-        const x2 = x0 - 1.0 + 2.0 * G2;
-        const y2 = y0 - 1.0 + 2.0 * G2;
-        const ii = i & 255; const jj = j & 255;
-
-        let n0 = 0, n1 = 0, n2 = 0;
-        let t0 = 0.5 - x0*x0 - y0*y0;
-        if (t0 >= 0) {
-          t0 *= t0;
-          const gi0 = this.p[ii + this.p[jj]] % 8;
-          const u = gi0 < 4 ? x0 : y0; const v = gi0 < 4 ? y0 : x0;
-          n0 = t0 * t0 * (((gi0 & 1) === 0 ? u : -u) + ((gi0 & 2) === 0 ? v : -v));
-        }
-        let t1 = 0.5 - x1*x1 - y1*y1;
-        if (t1 >= 0) {
-          t1 *= t1;
-          const gi1 = this.p[ii + i1 + this.p[jj + j1]] % 8;
-          const u = gi1 < 4 ? x1 : y1; const v = gi1 < 4 ? y1 : x1;
-          n1 = t1 * t1 * (((gi1 & 1) === 0 ? u : -u) + ((gi1 & 2) === 0 ? v : -v));
-        }
-        let t2 = 0.5 - x2*x2 - y2*y2;
-        if (t2 >= 0) {
-          t2 *= t2;
-          const gi2 = this.p[ii + 1 + this.p[jj + 1]] % 8;
-          const u = gi2 < 4 ? x2 : y2; const v = gi2 < 4 ? y2 : x2;
-          n2 = t2 * t2 * (((gi2 & 1) === 0 ? u : -u) + ((gi2 & 2) === 0 ? v : -v));
-        }
-        return 70.0 * (n0 + n1 + n2);
-      }
-      fbm(x, y, oct = 5) {
-        let val = 0, amp = 1, freq = 1, maxA = 0;
-        for (let o = 0; o < oct; o++) {
-          val += this.noise(x * freq, y * freq) * amp;
-          maxA += amp;
-          amp *= 0.5;
-          freq *= 2.0;
-        }
-        return val / maxA;
-      }
-      ridged(x, y, oct = 5) {
-        let val = 0, amp = 1, freq = 1, weight = 1;
-        for (let o = 0; o < oct; o++) {
-          let s = 1.0 - Math.abs(this.noise(x * freq, y * freq));
-          s = s * s * weight;
-          weight = Math.min(1.0, Math.max(0.0, s * 2.0));
-          val += s * amp;
-          amp *= 0.5;
-          freq *= 2.0;
-        }
-        return val;
-      }
-    }
-
-    let simplex = new Simplex2D();
-
-    // --- Atualização da Malha: Hipsometria + Sedimentos + Escoamento em Ravinas ---
-    function updateTerrainMesh() {
-      const pos = terrainGeo.attributes.position;
-      const col = terrainGeo.attributes.color;
-
-      for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-        const h = terrainHeight[i];
-        pos.setY(i, h);
-
-        const hNorm = Math.min(1.0, Math.max(0.0, h / maxVerticalElevation));
-        const water = waterFlowTrail[i];
-        const sed = sedimentLayer[i];
-
-        let r = 0, g = 0, b = 0;
-
-        // 1. Hipsometria Cartográfica Base
-        if (hNorm < 0.22) {
-          const t = hNorm / 0.22;
-          r = THREE.MathUtils.lerp(0.14, 0.36, t);
-          g = THREE.MathUtils.lerp(0.40, 0.58, t);
-          b = THREE.MathUtils.lerp(0.18, 0.22, t);
-        } else if (hNorm < 0.58) {
-          const t = (hNorm - 0.22) / 0.36;
-          r = THREE.MathUtils.lerp(0.36, 0.70, t);
-          g = THREE.MathUtils.lerp(0.58, 0.52, t);
-          b = THREE.MathUtils.lerp(0.22, 0.32, t);
-        } else if (hNorm < 0.84) {
-          const t = (hNorm - 0.58) / 0.26;
-          r = THREE.MathUtils.lerp(0.70, 0.44, t);
-          g = THREE.MathUtils.lerp(0.52, 0.40, t);
-          b = THREE.MathUtils.lerp(0.32, 0.36, t);
-        } else {
-          const t = (hNorm - 0.84) / 0.16;
-          r = THREE.MathUtils.lerp(0.44, 0.96, t);
-          g = THREE.MathUtils.lerp(0.40, 0.97, t);
-          b = THREE.MathUtils.lerp(0.36, 1.00, t);
+        vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+        float snoise(vec2 v){
+            const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                               -0.577350269189626, 0.024390243902439);
+            vec2 i  = floor(v + dot(v, C.yy) );
+            vec2 x0 = v -   i + dot(i, C.xx);
+            vec2 i1;
+            i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+            vec4 x12 = x0.xyxy + C.xxzz;
+            x12.xy -= i1;
+            i = mod(i, 289.0);
+            vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+            + i.x + vec3(0.0, i1.x, 1.0 ));
+            vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+            m = m*m ;
+            m = m*m ;
+            vec3 x = 2.0 * fract(p * C.www) - 1.0;
+            vec3 h = abs(x) - 0.5;
+            vec3 ox = floor(x + 0.5);
+            vec3 a0 = x - ox;
+            m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+            vec3 g;
+            g.x  = a0.x  * x0.x  + h.x  * x0.y;
+            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+            return 130.0 * dot(m, g);
         }
 
-        // 2. Deposição de Sedimentos (Leque Aluvial / Areia Ocre nas Áreas Baixas)
-        if (sed > 0.05) {
-          const sedT = Math.min(1.0, sed / 0.8);
-          // Tom arenoso ocre/dourado de aluvião
-          r = THREE.MathUtils.lerp(r, 0.82, sedT * 0.85);
-          g = THREE.MathUtils.lerp(g, 0.68, sedT * 0.85);
-          b = THREE.MathUtils.lerp(b, 0.38, sedT * 0.85);
-        }
-
-        // 3. Escoamento Linear de Água (Ravinas e Cursos d'Água Ativos)
-        if (water > 0.08) {
-          const waterT = Math.min(1.0, water / 1.2);
-          // Azul vivo/turquesa brilhante nos canais em fluxo
-          r = THREE.MathUtils.lerp(r, 0.05, waterT);
-          g = THREE.MathUtils.lerp(g, 0.58, waterT);
-          b = THREE.MathUtils.lerp(b, 0.98, waterT);
-        }
-
-        col.setXYZ(i, r, g, b);
-      }
-
-      pos.needsUpdate = true;
-      col.needsUpdate = true;
-      terrainGeo.computeVertexNormals();
-    }
-
-    // --- Presets Geomorfológicos ---
-    function generatePreset(type) {
-      const center = GRID_SIZE / 2;
-      waterFlowTrail.fill(0);
-      sedimentLayer.fill(0);
-
-      for (let i = 0; i < GRID_SIZE; i++) {
-        for (let j = 0; j < GRID_SIZE; j++) {
-          const idx = i * GRID_SIZE + j;
-          const u = i / (GRID_SIZE - 1);
-          const v = j / (GRID_SIZE - 1);
-          const dx = (i - center) / center;
-          const dz = (j - center) / center;
-          const dist = Math.hypot(dx, dz);
-
-          let normH = 0;
-
-          if (type === 'cordilheira') {
-            const ridge = simplex.ridged(u * 3.2, v * 3.2, 5);
-            const valley = simplex.fbm(u * 1.5, v * 1.5, 3) * 0.25;
-            normH = Math.max(0.06, (ridge * 0.75 + valley) - 0.1);
-          } else if (type === 'chapada') {
-            const baseNoise = simplex.fbm(u * 2.0, v * 2.0, 4) * 0.08;
-            const mask = 1.0 / (1.0 + Math.exp(16.0 * (dist - 0.52)));
-            normH = mask * 0.72 + baseNoise;
-          } else if (type === 'depressao') {
-            const rim = Math.min(1.0, Math.pow(dist * 1.4, 2.0));
-            const innerDetail = simplex.fbm(u * 4.0, v * 4.0, 4) * 0.1;
-            normH = Math.max(0.06, rim * 0.75 + innerDetail - 0.22);
-            if (normH < 0.16) {
-              waterFlowTrail[idx] = (0.16 - normH) * 8.0;
+        float fbm(vec2 p) {
+            float val = 0.0;
+            float amp = 0.5;
+            for(int i=0; i<5; i++) {
+                val += amp * snoise(p);
+                p *= 2.02;
+                amp *= 0.5;
             }
-          } else if (type === 'planicie') {
-            const meander = Math.sin(u * 8.0 + simplex.noise(u * 3, v * 3) * 3.0) * 0.04;
-            normH = 0.12 + simplex.fbm(u * 1.8, v * 1.8, 3) * 0.06 + meander;
-          } else if (type === 'dunas') {
-            const wave1 = Math.sin((u + v * 0.5) * 26.0 + simplex.noise(u * 4, v * 4) * 4.0);
-            normH = 0.15 + (Math.max(0, wave1) * 0.2) + simplex.fbm(u * 3, v * 3, 3) * 0.1;
-            sedimentLayer[idx] = 0.8;
-          }
-
-          rawNormalized[idx] = normH;
-          terrainHeight[idx] = normH * maxVerticalElevation;
-        }
-      }
-      updateTerrainMesh();
-    }
-
-    // --- Interpolação de Altura e Gradiente ---
-    function getHeightAndGradient(posX, posZ) {
-      const gx = ((posX / WORLD_SIZE) + 0.5) * (GRID_SIZE - 1);
-      const gz = ((posZ / WORLD_SIZE) + 0.5) * (GRID_SIZE - 1);
-
-      const x0 = Math.floor(gx);
-      const z0 = Math.floor(gz);
-      const fx = gx - x0;
-      const fz = gz - z0;
-
-      if (x0 < 0 || x0 >= GRID_SIZE - 1 || z0 < 0 || z0 >= GRID_SIZE - 1) {
-        return { height: 0, gradX: 0, gradZ: 0, valid: false };
-      }
-
-      const h00 = terrainHeight[z0 * GRID_SIZE + x0];
-      const h10 = terrainHeight[z0 * GRID_SIZE + (x0 + 1)];
-      const h01 = terrainHeight[(z0 + 1) * GRID_SIZE + x0];
-      const h11 = terrainHeight[(z0 + 1) * GRID_SIZE + (x0 + 1)];
-
-      const height = (1 - fx) * (1 - fz) * h00 +
-                     fx * (1 - fz) * h10 +
-                     (1 - fx) * fz * h01 +
-                     fx * fz * h11;
-
-      const gradX = (h10 - h00) * (1 - fz) + (h11 - h01) * fz;
-      const gradZ = (h01 - h00) * (1 - fx) + (h11 - h10) * fx;
-
-      return { height, gradX, gradZ, valid: true };
-    }
-
-    // --- Simulação Hidráulica: Escoamento Linear, Ravinamento e Deposição Aluvial ---
-    function simulateLinearStream() {
-      let posX = (Math.random() - 0.5) * (WORLD_SIZE - 6);
-      let posZ = (Math.random() - 0.5) * (WORLD_SIZE - 6);
-      let dirX = 0, dirZ = 0, speed = 1.2, water = 1.0, sediment = 0.0;
-
-      for (let step = 0; step < config.maxLifetime; step++) {
-        const hg = getHeightAndGradient(posX, posZ);
-        if (!hg.valid) break;
-
-        // Inércia com convergência gravitacional para esculpir ravinas contínuas
-        dirX = dirX * config.inertia - hg.gradX * (1 - config.inertia);
-        dirZ = dirZ * config.inertia - hg.gradZ * (1 - config.inertia);
-
-        const len = Math.hypot(dirX, dirZ);
-        if (len === 0) break;
-        dirX /= len;
-        dirZ /= len;
-
-        const nextPosX = posX + dirX * CELL_SIZE * 0.9;
-        const nextPosZ = posZ + dirZ * CELL_SIZE * 0.9;
-
-        const nextHg = getHeightAndGradient(nextPosX, nextPosZ);
-        if (!nextHg.valid) break;
-
-        const deltaH = nextHg.height - hg.height;
-        const slope = Math.max(0.01, -deltaH);
-        const capacity = Math.max(slope * speed * water * config.capacityFactor, config.minCapacity);
-
-        const gx = Math.round(((posX / WORLD_SIZE) + 0.5) * (GRID_SIZE - 1));
-        const gz = Math.round(((posZ / WORLD_SIZE) + 0.5) * (GRID_SIZE - 1));
-        const idx = gz * GRID_SIZE + gx;
-
-        // 1. Marca visualmente a linha do escoamento ativo
-        waterFlowTrail[idx] = Math.min(waterFlowTrail[idx] + 0.22 * water, 2.5);
-
-        // 2. Dinâmica de Erosão / Deposição de Sedimentos
-        if (sediment > capacity || deltaH > 0) {
-          // Desaceleração / Áreas Planas e Depressões -> DEPOSIÇÃO DE MATERIAL
-          const depositAmount = (deltaH > 0)
-            ? Math.min(deltaH, sediment)
-            : (sediment - capacity) * config.depositSpeed;
-
-          sediment -= depositAmount;
-          terrainHeight[idx] += depositAmount;
-          sedimentLayer[idx] = Math.min(sedimentLayer[idx] + depositAmount * 2.5, 1.5);
-        } else {
-          // Encosta íngreme / Alta velocidade -> ESCAVAÇÃO DE RAVINAS
-          const erodeAmount = Math.min((capacity - sediment) * config.erosionSpeed, slope * 0.5);
-          sediment += erodeAmount;
-          terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - erodeAmount);
-          sedimentLayer[idx] = Math.max(0.0, sedimentLayer[idx] - erodeAmount * 1.5);
+            return val;
         }
 
-        speed = Math.sqrt(Math.max(0, speed * speed + deltaH * config.gravity));
-        water *= (1 - config.evaporationRate);
-        posX = nextPosX;
-        posZ = nextPosZ;
-      }
-    }
+        void main() {
+            vec2 st = vUv * 3.0;
+            float h = fbm(st) * 0.5 + 0.5;
+            h = pow(h, 1.8); // Vales mais pronunciados
+            
+            float bedrock = h * 0.8;
+            float regolith = h * 0.2;
+            float water = 0.0;
+            float sediment = 0.0;
 
-    // --- Atualização de Chuva (Traços Lineares) e Vento ---
-    function updateVisuals() {
-      // Chuva em Linhas
-      if (config.simRunning) {
-        rainLines.visible = true;
-        const pos = rainGeo.attributes.position.array;
+            fragColor = vec4(bedrock, regolith, water, sediment);
+        }`;
 
-        for (let i = 0; i < RAIN_COUNT; i++) {
-          const b = rainBasePos[i];
-          b.y -= rainVelocities[i];
+        // 3. Shader de Hidrodinâmica e Outflow Flux (Águas Rasas)
+        const fluxShader = `#version 300 es
+        precision highp float;
+        in vec2 vUv;
+        uniform sampler2D uTerrain;
+        uniform sampler2D uFlux;
+        uniform vec2 uTexelSize;
+        uniform float uRainRate;
+        uniform float uDeltaTime;
+        out vec4 fragColor;
 
-          // Verifica colisão com o relevo local
-          const hg = getHeightAndGradient(b.x, b.z);
-          const ground = hg.valid ? hg.height : 0;
+        void main() {
+            vec4 t = texture(uTerrain, vUv);
+            float b = t.r;
+            float r = t.g;
+            float d = t.b + uRainRate * uDeltaTime; // Adiciona chuva
+            float hCenter = b + r + d;
 
-          if (b.y <= ground) {
-            b.x = (Math.random() - 0.5) * WORLD_SIZE;
-            b.y = 40 + Math.random() * 60;
-            b.z = (Math.random() - 0.5) * WORLD_SIZE;
-          }
+            vec4 flux = texture(uFlux, vUv);
 
-          // Topo do traço
-          pos[i * 6 + 0] = b.x;
-          pos[i * 6 + 1] = b.y;
-          pos[i * 6 + 2] = b.z;
-          // Fundo do traço
-          pos[i * 6 + 3] = b.x;
-          pos[i * 6 + 4] = b.y - 3.2;
-          pos[i * 6 + 5] = b.z;
-        }
-        rainGeo.attributes.position.needsUpdate = true;
-      } else {
-        rainLines.visible = false;
-      }
+            float hL = texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).r + texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).g + texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).b;
+            float hR = texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).r + texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).g + texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).b;
+            float hT = texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).r + texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).g + texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).b;
+            float hB = texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).r + texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).g + texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).b;
 
-      // Vento
-      if (config.windEnabled && config.windSpeed > 0.05) {
-        windPoints.visible = true;
-        const pos = windGeo.attributes.position.array;
-        const vx = Math.cos(config.windAngle) * config.windSpeed * 2.0;
-        const vz = Math.sin(config.windAngle) * config.windSpeed * 2.0;
+            float g = 9.81;
+            float pipeArea = 1.0;
+            float pipeLen = 1.0;
+            float factor = uDeltaTime * pipeArea * g / pipeLen;
 
-        for (let i = 0; i < WIND_COUNT; i++) {
-          pos[i * 3] += vx;
-          pos[i * 3 + 2] += vz;
-          pos[i * 3 + 1] += (Math.random() - 0.5) * 0.2;
+            float fL = max(0.0, flux.r + factor * (hCenter - hL));
+            float fR = max(0.0, flux.g + factor * (hCenter - hR));
+            float fT = max(0.0, flux.b + factor * (hCenter - hT));
+            float fB = max(0.0, flux.a + factor * (hCenter - hB));
 
-          const limit = WORLD_SIZE / 2;
-          if (pos[i * 3] > limit || pos[i * 3] < -limit || pos[i * 3 + 2] > limit || pos[i * 3 + 2] < -limit) {
-            pos[i * 3] = -vx * 30 + (Math.random() - 0.5) * WORLD_SIZE;
-            pos[i * 3 + 1] = 3 + Math.random() * 25;
-            pos[i * 3 + 2] = -vz * 30 + (Math.random() - 0.5) * WORLD_SIZE;
-          }
-        }
-        windGeo.attributes.position.needsUpdate = true;
-      } else {
-        windPoints.visible = false;
-      }
-    }
-
-    // --- Simulação Eólica ---
-    function stepWindSimulation() {
-      if (!config.windEnabled || config.windSpeed <= 0.01) return;
-
-      const wx = Math.cos(config.windAngle);
-      const wz = Math.sin(config.windAngle);
-
-      for (let k = 0; k < 60; k++) {
-        const i = 1 + Math.floor(Math.random() * (GRID_SIZE - 2));
-        const j = 1 + Math.floor(Math.random() * (GRID_SIZE - 2));
-        const idx = i * GRID_SIZE + j;
-
-        const ni = Math.round(i + wz * 1.5);
-        const nj = Math.round(j + wx * 1.5);
-
-        if (ni >= 0 && ni < GRID_SIZE && nj >= 0 && nj < GRID_SIZE) {
-          const downIdx = ni * GRID_SIZE + nj;
-          const exposure = terrainHeight[idx] - terrainHeight[downIdx];
-          const transport = Math.max(0, config.windSpeed * 0.02 * (1.0 + exposure * 0.1));
-
-          if (transport > 0) {
-            terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - transport);
-            terrainHeight[downIdx] += transport * 0.98;
-            sedimentLayer[downIdx] = Math.min(1.5, sedimentLayer[downIdx] + transport * 2.0);
-          }
-        }
-      }
-    }
-
-    // --- Pincel Manual ---
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    let isMouseDown = false;
-    let brushRadius = 20;
-    let brushMode = 'raise';
-
-    function applyBrush(worldPoint) {
-      const local = terrainMesh.worldToLocal(worldPoint.clone());
-      const rSq = brushRadius * brushRadius;
-
-      for (let i = 0; i < GRID_SIZE; i++) {
-        for (let j = 0; j < GRID_SIZE; j++) {
-          const idx = i * GRID_SIZE + j;
-          const vx = (j / (GRID_SIZE - 1) - 0.5) * WORLD_SIZE;
-          const vz = (i / (GRID_SIZE - 1) - 0.5) * WORLD_SIZE;
-          const dSq = (vx - local.x) ** 2 + (vz - local.z) ** 2;
-
-          if (dSq < rSq) {
-            const factor = Math.cos((Math.sqrt(dSq) / brushRadius) * (Math.PI / 2));
-            if (brushMode === 'raise') {
-              terrainHeight[idx] += 1.0 * factor;
-            } else if (brushMode === 'lower') {
-              terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - 1.0 * factor);
-            } else if (brushMode === 'water') {
-              waterFlowTrail[idx] += 2.5 * factor; // Nascente de ravina
-            } else if (brushMode === 'smooth') {
-              const iPrev = Math.max(0, i - 1) * GRID_SIZE + j;
-              const iNext = Math.min(GRID_SIZE - 1, i + 1) * GRID_SIZE + j;
-              const jPrev = i * GRID_SIZE + Math.max(0, j - 1);
-              const jNext = i * GRID_SIZE + Math.min(GRID_SIZE - 1, j + 1);
-              const avg = (terrainHeight[iPrev] + terrainHeight[iNext] + terrainHeight[jPrev] + terrainHeight[jNext]) * 0.25;
-              terrainHeight[idx] = THREE.MathUtils.lerp(terrainHeight[idx], avg, 0.3 * factor);
+            float totalFlux = (fL + fR + fT + fB) * uDeltaTime;
+            if (totalFlux > 0.0) {
+                float scale = min(1.0, (d * 1.0) / totalFlux);
+                fL *= scale; fR *= scale; fT *= scale; fB *= scale;
             }
-          }
+
+            fragColor = vec4(fL, fR, fT, fB);
+        }`;
+
+        // 4. Shader de Erosão e Deposição Hidráulica
+        const erosionShader = `#version 300 es
+        precision highp float;
+        in vec2 vUv;
+        uniform sampler2D uTerrain;
+        uniform sampler2D uFlux;
+        uniform vec2 uTexelSize;
+        uniform float uDeltaTime;
+        uniform float uErosRate;
+        uniform float uDepRate;
+        uniform float uEvapRate;
+        uniform float uUpliftRate;
+        out vec4 fragColor;
+
+        void main() {
+            vec4 t = texture(uTerrain, vUv);
+            vec4 f = texture(uFlux, vUv);
+
+            float fInL = texture(uFlux, vUv + vec2(-uTexelSize.x, 0.0)).g;
+            float fInR = texture(uFlux, vUv + vec2( uTexelSize.x, 0.0)).r;
+            float fInT = texture(uFlux, vUv + vec2(0.0,  uTexelSize.y)).a;
+            float fInB = texture(uFlux, vUv + vec2(0.0, -uTexelSize.y)).b;
+
+            float netVolume = (fInL + fInR + fInT + fInB - (f.r + f.g + f.b + f.a)) * uDeltaTime;
+            float dNew = max(0.0, t.b + netVolume);
+
+            // Vetor velocidade do fluxo
+            float u = (fInL - f.r + f.g - fInR) * 0.5;
+            float v = (fInB - f.a + f.b - fInT) * 0.5;
+            float vel = length(vec2(u, v));
+
+            // Gradiente/Declividade local
+            float hL = texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).r + texture(uTerrain, vUv + vec2(-uTexelSize.x, 0.0)).g;
+            float hR = texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).r + texture(uTerrain, vUv + vec2( uTexelSize.x, 0.0)).g;
+            float hT = texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).r + texture(uTerrain, vUv + vec2(0.0,  uTexelSize.y)).g;
+            float hB = texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).r + texture(uTerrain, vUv + vec2(0.0, -uTexelSize.y)).g;
+            float slope = length(vec2(hR - hL, hT - hB));
+
+            // Capacidade de transporte de sedimento
+            float capacity = max(0.0, vel * sin(atan(slope)) * min(dNew, 1.0));
+            
+            float regolith = t.g;
+            float sediment = t.a;
+            float bedrock = t.r + uUpliftRate * uDeltaTime; // Soerguimento endógeno
+
+            if (capacity > sediment) {
+                float eroded = uErosRate * (capacity - sediment);
+                float actualEroded = min(eroded, regolith);
+                regolith -= actualEroded;
+                sediment += actualEroded;
+            } else {
+                float deposited = uDepRate * (sediment - capacity);
+                regolith += deposited;
+                sediment -= deposited;
+            }
+
+            // Evaporação
+            dNew *= (1.0 - uEvapRate * uDeltaTime);
+
+            fragColor = vec4(bedrock, max(0.0, regolith), max(0.0, dNew), max(0.0, sediment));
+        }`;
+
+        // 5. Shader de Desmoronamento Térmico (Ângulo de Repouso)
+        const thermalShader = `#version 300 es
+        precision highp float;
+        in vec2 vUv;
+        uniform sampler2D uTerrain;
+        uniform vec2 uTexelSize;
+        uniform float uMaxSlope;
+        out vec4 fragColor;
+
+        void main() {
+            vec4 t = texture(uTerrain, vUv);
+            float hCell = t.r + t.g;
+
+            vec2 offsets[4] = vec2[](
+                vec2(-uTexelSize.x, 0.0), vec2(uTexelSize.x, 0.0),
+                vec2(0.0, uTexelSize.y), vec2(0.0, -uTexelSize.y)
+            );
+
+            float maxDiff = 0.0;
+            for(int i=0; i<4; i++) {
+                vec4 n = texture(uTerrain, vUv + offsets[i]);
+                float hN = n.r + n.g;
+                float diff = hCell - hN;
+                if(diff > maxDiff) maxDiff = diff;
+            }
+
+            float regolith = t.g;
+            if (maxDiff > uMaxSlope && regolith > 0.0) {
+                float move = 0.5 * (maxDiff - uMaxSlope);
+                regolith -= min(move, regolith);
+            }
+
+            fragColor = vec4(t.r, max(0.0, regolith), t.b, t.a);
+        }`;
+
+        // 6. Shader de Renderização 3D do Terreno (Vertex + Fragment com Biomas)
+        const terrainRenderVS = `#version 300 es
+        precision highp float;
+        uniform sampler2D uTerrain;
+        uniform vec2 uTexelSize;
+        out vec2 vUv;
+        out vec3 vNormal;
+        out vec3 vWorldPos;
+        out vec4 vTerrainData;
+
+        void main() {
+            vUv = uv;
+            vec4 data = texture(uTerrain, uv);
+            vTerrainData = data;
+
+            float totalHeight = data.r + data.g + data.b;
+            vec3 pos = position;
+            pos.z = totalHeight * 40.0; // Escala de altura 3D
+
+            // Cálculo das normais diretamente no Vertex Shader
+            float hL = texture(uTerrain, uv + vec2(-uTexelSize.x, 0.0)).r + texture(uTerrain, uv + vec2(-uTexelSize.x, 0.0)).g + texture(uTerrain, uv + vec2(-uTexelSize.x, 0.0)).b;
+            float hR = texture(uTerrain, uv + vec2( uTexelSize.x, 0.0)).r + texture(uTerrain, uv + vec2( uTexelSize.x, 0.0)).g + texture(uTerrain, uv + vec2( uTexelSize.x, 0.0)).b;
+            float hB = texture(uTerrain, uv + vec2(0.0, -uTexelSize.y)).r + texture(uTerrain, uv + vec2(0.0, -uTexelSize.y)).g + texture(uTerrain, uv + vec2(0.0, -uTexelSize.y)).b;
+            float hT = texture(uTerrain, uv + vec2(0.0,  uTexelSize.y)).r + texture(uTerrain, uv + vec2(0.0,  uTexelSize.y)).g + texture(uTerrain, uv + vec2(0.0,  uTexelSize.y)).b;
+
+            vec3 normal = normalize(vec3((hL - hR) * 40.0, (hB - hT) * 40.0, 2.0));
+            vNormal = normalMatrix * normal;
+
+            vec4 worldPosition = modelMatrix * vec4(pos, 1.0);
+            vWorldPos = worldPosition.xyz;
+            gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        }`;
+
+        const terrainRenderFS = `#version 300 es
+        precision highp float;
+        in vec2 vUv;
+        in vec3 vNormal;
+        in vec3 vWorldPos;
+        in vec4 vTerrainData;
+
+        out vec4 fragColor;
+
+        void main() {
+            float bedrock = vTerrainData.r;
+            float regolith = vTerrainData.g;
+            float water = vTerrainData.b;
+
+            vec3 N = normalize(vNormal);
+            vec3 L = normalize(vec3(0.5, 0.8, 1.0)); // Luz solar
+            float diff = max(dot(N, L), 0.2);
+
+            float slope = 1.0 - N.z; // Inclinação
+            float alt = vWorldPos.z;
+
+            // Cores do Terreno / Biomas
+            vec3 cBedrock = vec3(0.35, 0.32, 0.30); // Rocha Cinza
+            vec3 cRegolith = vec3(0.70, 0.55, 0.35); // Areia/Sedimento
+            vec3 cGrass = vec3(0.20, 0.55, 0.15); // Vegetação/Grama
+            vec3 cSnow = vec3(0.95, 0.95, 0.98); // Neve em topo
+            vec3 cWater = vec3(0.05, 0.45, 0.85); // Água Fluindo
+
+            // Zoneamento Ecológico Dinâmico
+            vec3 landColor = mix(cGrass, cRegolith, smoothstep(0.05, 0.2, regolith));
+            if (slope > 0.4) landColor = cBedrock;
+            if (alt > 25.0) landColor = mix(landColor, cSnow, smoothstep(25.0, 32.0, alt));
+
+            vec3 finalColor = landColor * diff;
+
+            // Renderização da Lâmina d'Água
+            if (water > 0.001) {
+                float waterAlpha = smoothstep(0.0, 0.1, water) * 0.75;
+                finalColor = mix(finalColor, cWater * (diff + 0.3), waterAlpha);
+            }
+
+            fragColor = vec4(finalColor, 1.0);
+        }`;
+
+        // --- ENGINES E GERENCIAMENTO DE GPU / THREE.JS ---
+
+        let scene, camera, renderer, controls;
+        let simMesh, terrainMesh, terrainGeo, terrainMat;
+        let simRes = 128;
+        let isRunning = true;
+
+        let fboTerrainA, fboTerrainB, fboFluxA, fboFluxB;
+        let fluxMaterial, erosionMaterial, thermalMaterial;
+
+        const clock = new THREE.Clock();
+
+        function createFBO(res) {
+            return new THREE.WebGLRenderTarget(res, res, {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType,
+                depthBuffer: false,
+                stencilBuffer: false
+            });
         }
-      }
-      updateTerrainMesh();
-    }
 
-    window.addEventListener('pointerdown', (e) => {
-      if (e.button === 0 && e.target === renderer.domElement) {
-        isMouseDown = true;
-        castAndApply(e);
-      }
-    });
-    window.addEventListener('pointerup', () => { isMouseDown = false; });
-    window.addEventListener('pointermove', (e) => {
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      if (isMouseDown) castAndApply(e);
-    });
+        function initApp() {
+            const container = document.getElementById('canvas-container');
 
-    function castAndApply(e) {
-      raycaster.setFromCamera(mouse, camera);
-      const hits = raycaster.intersectObject(terrainMesh);
-      if (hits.length > 0) applyBrush(hits[0].point);
-    }
+            // 1. Cena Three.js
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0d1117);
 
-    // --- UI Controls ---
-    const terrainRotSlider = document.getElementById('terrainRotation');
-    terrainRotSlider.addEventListener('input', (e) => {
-      const deg = parseFloat(e.target.value);
-      terrainGroup.rotation.y = THREE.MathUtils.degToRad(deg);
-      document.getElementById('rotVal').innerText = `${deg}°`;
-      updateCompass();
-    });
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, -90, 70);
 
-    const btnAutoRotate = document.getElementById('btnAutoRotate');
-    btnAutoRotate.addEventListener('click', () => {
-      config.autoRotate = !config.autoRotate;
-      btnAutoRotate.innerText = config.autoRotate ? 'Auto Giro: ON' : 'Auto Giro: OFF';
-      btnAutoRotate.className = config.autoRotate ? 'active' : 'secondary';
-    });
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
 
-    document.getElementById('btnResetView').addEventListener('click', () => {
-      camera.position.set(0, 140, 210);
-      controls.target.set(0, 0, 0);
-      terrainGroup.rotation.y = 0;
-      terrainRotSlider.value = 0;
-      document.getElementById('rotVal').innerText = '0°';
-      updateCompass();
-    });
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05;
 
-    const compassNeedle = document.getElementById('compass-needle');
-    function updateCompass() {
-      const angle = terrainGroup.rotation.y;
-      compassNeedle.style.transform = `rotate(${THREE.MathUtils.radToDeg(-angle)}deg)`;
-    }
-    document.getElementById('compass').addEventListener('click', () => {
-      terrainGroup.rotation.y = 0;
-      terrainRotSlider.value = 0;
-      document.getElementById('rotVal').innerText = '0°';
-      updateCompass();
-    });
+            // 2. Inicialização dos FBOs Ping-Pong
+            setupSimulation();
 
-    const presetSelect = document.getElementById('presetSelect');
-    presetSelect.addEventListener('change', (e) => {
-      generatePreset(e.target.value);
-    });
-    document.getElementById('btnRegenerate').addEventListener('click', () => {
-      simplex = new Simplex2D();
-      generatePreset(presetSelect.value);
-    });
+            // 3. Criar Malha 3D Visível do Terreno
+            terrainGeo = new THREE.PlaneBufferGeometry(100, 100, simRes - 1, simRes - 1);
+            terrainMat = new THREE.ShaderMaterial({
+                vertexShader: terrainRenderVS,
+                fragmentShader: terrainRenderFS,
+                uniforms: {
+                    uTerrain: { value: fboTerrainA.texture },
+                    uTexelSize: { value: new THREE.Vector2(1 / simRes, 1 / simRes) }
+                },
+                wireframe: false
+            });
 
-    document.getElementById('verticalScale').addEventListener('input', (e) => {
-      const oldMax = maxVerticalElevation;
-      maxVerticalElevation = parseFloat(e.target.value);
-      document.getElementById('scaleVal').innerText = `${e.target.value}m`;
-      const ratio = maxVerticalElevation / oldMax;
-      for (let i = 0; i < terrainHeight.length; i++) {
-        terrainHeight[i] *= ratio;
-      }
-      updateTerrainMesh();
-    });
+            terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+            scene.add(terrainMesh);
 
-    const btnToggleRain = document.getElementById('btnToggleRain');
-    btnToggleRain.addEventListener('click', () => {
-      config.simRunning = !config.simRunning;
-      btnToggleRain.innerText = config.simRunning ? 'Chuva: ON' : 'Chuva: OFF';
-      btnToggleRain.className = config.simRunning ? 'active' : 'secondary';
-      document.getElementById('simStatus').innerText = config.simRunning ? 'Ravinamento' : 'Pausado';
-    });
+            // Light Ambient Helper
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-    document.getElementById('btnDrainWater').addEventListener('click', () => {
-      waterFlowTrail.fill(0);
-      sedimentLayer.fill(0);
-      updateTerrainMesh();
-    });
+            // Resize Event
+            window.addEventListener('resize', onWindowResize);
 
-    document.getElementById('rainIntensity').addEventListener('input', (e) => {
-      config.rainDrops = parseInt(e.target.value);
-      document.getElementById('rainVal').innerText = e.target.value;
-    });
+            // Bind de Eventos UI
+            setupUI();
 
-    document.getElementById('erosionRate').addEventListener('input', (e) => {
-      config.erosionSpeed = parseFloat(e.target.value);
-      document.getElementById('erosionVal').innerText = e.target.value;
-    });
-
-    document.getElementById('depoRate').addEventListener('input', (e) => {
-      config.depositSpeed = parseFloat(e.target.value);
-      document.getElementById('depoVal').innerText = e.target.value;
-    });
-
-    const btnToggleWind = document.getElementById('btnToggleWind');
-    btnToggleWind.addEventListener('click', () => {
-      config.windEnabled = !config.windEnabled;
-      btnToggleWind.innerText = config.windEnabled ? 'Vento: ON' : 'Vento: OFF';
-      btnToggleWind.className = config.windEnabled ? 'active' : 'secondary';
-    });
-
-    const windDirSlider = document.getElementById('windDirection');
-    windDirSlider.addEventListener('input', (e) => {
-      const deg = parseFloat(e.target.value);
-      config.windAngle = THREE.MathUtils.degToRad(deg);
-      const dirs = ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO', 'N'];
-      const dirName = dirs[Math.round(deg / 45) % 8];
-      document.getElementById('windDirVal').innerText = `${deg}° (${dirName})`;
-    });
-
-    document.getElementById('windSpeed').addEventListener('input', (e) => {
-      config.windSpeed = parseFloat(e.target.value);
-      document.getElementById('windSpeedVal').innerText = e.target.value;
-    });
-
-    document.getElementById('brushMode').addEventListener('change', (e) => { brushMode = e.target.value; });
-    document.getElementById('brushRadius').addEventListener('input', (e) => {
-      brushRadius = parseFloat(e.target.value);
-      document.getElementById('brushRadiusVal').innerText = `Raio ${e.target.value}`;
-    });
-
-    document.getElementById('heightmapInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = GRID_SIZE;
-          canvas.height = GRID_SIZE;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, GRID_SIZE, GRID_SIZE);
-          const data = ctx.getImageData(0, 0, GRID_SIZE, GRID_SIZE).data;
-
-          for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-            const gray = (data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114) / 255.0;
-            rawNormalized[i] = gray;
-            terrainHeight[i] = gray * maxVerticalElevation;
-            waterFlowTrail[i] = 0;
-            sedimentLayer[i] = 0;
-          }
-          updateTerrainMesh();
-        };
-        img.src = evt.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // Início com Cordilheira
-    generatePreset('cordilheira');
-
-    // --- Loop Principal ---
-    function animate() {
-      requestAnimationFrame(animate);
-
-      if (config.autoRotate) {
-        terrainGroup.rotation.y += 0.003;
-        const currentDeg = THREE.MathUtils.radToDeg(terrainGroup.rotation.y) % 360;
-        terrainRotSlider.value = currentDeg;
-        document.getElementById('rotVal').innerText = `${Math.round(currentDeg)}°`;
-        updateCompass();
-      }
-
-      if (config.simRunning) {
-        // Escavação linear de ravinas e escoamento
-        for (let i = 0; i < config.rainDrops; i++) {
-          simulateLinearStream();
+            // Loop de Renderização
+            animate();
         }
 
-        // Dissipação orgânica dos filetes d'água
-        for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-          if (waterFlowTrail[i] > 0.01) {
-            waterFlowTrail[i] *= 0.982;
-          } else {
-            waterFlowTrail[i] = 0;
-          }
+        function setupSimulation() {
+            fboTerrainA = createFBO(simRes);
+            fboTerrainB = createFBO(simRes);
+            fboFluxA = createFBO(simRes);
+            fboFluxB = createFBO(simRes);
+
+            // Cena Ortográfica Invisível para Processamento GPGPU
+            const simScene = new THREE.Scene();
+            const simCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            const simGeo = new THREE.PlaneBufferGeometry(2, 2);
+
+            // Material 1: Inicialização
+            const initMat = new THREE.ShaderMaterial({
+                vertexShader: quadVertexShader,
+                fragmentShader: initTerrainShader
+            });
+            simMesh = new THREE.Mesh(simGeo, initMat);
+            simScene.add(simMesh);
+
+            // Executa Pass de Inicialização do Terreno
+            renderer.setRenderTarget(fboTerrainA);
+            renderer.render(simScene, simCam);
+            renderer.setRenderTarget(fboTerrainB);
+            renderer.render(simScene, simCam);
+            renderer.setRenderTarget(null);
+
+            // Materiais de Simulação
+            const texel = new THREE.Vector2(1 / simRes, 1 / simRes);
+
+            fluxMaterial = new THREE.ShaderMaterial({
+                vertexShader: quadVertexShader,
+                fragmentShader: fluxShader,
+                uniforms: {
+                    uTerrain: { value: null },
+                    uFlux: { value: null },
+                    uTexelSize: { value: texel },
+                    uRainRate: { value: 0.01 },
+                    uDeltaTime: { value: 0.016 }
+                }
+            });
+
+            erosionMaterial = new THREE.ShaderMaterial({
+                vertexShader: quadVertexShader,
+                fragmentShader: erosionShader,
+                uniforms: {
+                    uTerrain: { value: null },
+                    uFlux: { value: null },
+                    uTexelSize: { value: texel },
+                    uDeltaTime: { value: 0.016 },
+                    uErosRate: { value: 0.02 },
+                    uDepRate: { value: 0.02 },
+                    uEvapRate: { value: 0.015 },
+                    uUpliftRate: { value: 0.0 }
+                }
+            });
+
+            thermalMaterial = new THREE.ShaderMaterial({
+                vertexShader: quadVertexShader,
+                fragmentShader: thermalShader,
+                uniforms: {
+                    uTerrain: { value: null },
+                    uTexelSize: { value: texel },
+                    uMaxSlope: { value: Math.tan(35 * Math.PI / 180) * (1 / simRes) }
+                }
+            });
         }
 
-        stepWindSimulation();
-        updateTerrainMesh();
-      }
+        function stepSimulation(dt) {
+            if (!isRunning) return;
 
-      updateVisuals();
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
+            const simCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            const simScene = new THREE.Scene();
+            const simGeo = new THREE.PlaneBufferGeometry(2, 2);
+            const quad = new THREE.Mesh(simGeo, fluxMaterial);
+            simScene.add(quad);
+
+            // Passo A: Hidrodinâmica e Fluxo
+            fluxMaterial.uniforms.uTerrain.value = fboTerrainA.texture;
+            fluxMaterial.uniforms.uFlux.value = fboFluxA.texture;
+            fluxMaterial.uniforms.uDeltaTime.value = dt;
+            renderer.setRenderTarget(fboFluxB);
+            renderer.render(simScene, simCam);
+
+            // Passo B: Erosão e Deposição
+            quad.material = erosionMaterial;
+            erosionMaterial.uniforms.uTerrain.value = fboTerrainA.texture;
+            erosionMaterial.uniforms.uFlux.value = fboFluxB.texture;
+            erosionMaterial.uniforms.uDeltaTime.value = dt;
+            renderer.setRenderTarget(fboTerrainB);
+            renderer.render(simScene, simCam);
+
+            // Passo C: Desmoronamento Térmico
+            quad.material = thermalMaterial;
+            thermalMaterial.uniforms.uTerrain.value = fboTerrainB.texture;
+            renderer.setRenderTarget(fboTerrainA);
+            renderer.render(simScene, simCam);
+
+            renderer.setRenderTarget(null);
+
+            // Atualiza Uniforme de Renderização
+            terrainMat.uniforms.uTerrain.value = fboTerrainA.texture;
+        }
+
+        let frameCount = 0, lastTime = performance.now();
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min(clock.getDelta(), 0.033);
+            stepSimulation(dt);
+
+            controls.update();
+            renderer.render(scene, camera);
+
+            // Estatísticas
+            frameCount++;
+            const now = performance.now();
+            if (now - lastTime >= 1000) {
+                document.getElementById('fps').innerText = frameCount;
+                frameCount = 0;
+                lastTime = now;
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- BIND DE CONTROLES E INTERFACE DE USUÁRIO ---
+        function setupUI() {
+            const bindInput = (id, targetObj, key, transform = v => parseFloat(v), displayFn = null) => {
+                const el = document.getElementById(id);
+                el.addEventListener('input', (e) => {
+                    const val = transform(e.target.value);
+                    targetObj[key].value = val;
+                    if (displayFn) displayFn(e.target.value);
+                });
+            };
+
+            bindInput('rain-rate', fluxMaterial.uniforms, 'uRainRate', v => parseFloat(v), v => document.getElementById('rain-val').innerText = parseFloat(v).toFixed(3));
+            bindInput('eros-rate', erosionMaterial.uniforms, 'uErosRate', v => parseFloat(v), v => document.getElementById('eros-val').innerText = parseFloat(v).toFixed(3));
+            bindInput('dep-rate', erosionMaterial.uniforms, 'uDepRate', v => parseFloat(v), v => document.getElementById('dep-val').innerText = parseFloat(v).toFixed(3));
+            bindInput('evap-rate', erosionMaterial.uniforms, 'uEvapRate', v => parseFloat(v), v => document.getElementById('evap-val').innerText = parseFloat(v).toFixed(3));
+            bindInput('uplift-rate', erosionMaterial.uniforms, 'uUpliftRate', v => parseFloat(v), v => document.getElementById('uplift-val').innerText = parseFloat(v).toFixed(4));
+
+            document.getElementById('thermal-angle').addEventListener('input', (e) => {
+                const deg = parseFloat(e.target.value);
+                document.getElementById('angle-val').innerText = `${deg}°`;
+                thermalMaterial.uniforms.uMaxSlope.value = Math.tan(deg * Math.PI / 180) * (1 / simRes);
+            });
+
+            document.getElementById('sim-res').addEventListener('change', (e) => {
+                simRes = parseInt(e.target.value);
+                document.getElementById('res-val').innerText = `${simRes} x ${simRes}`;
+                document.getElementById('cell-count').innerText = simRes * simRes;
+
+                // Reconstruir geometria e FBOs
+                scene.remove(terrainMesh);
+                terrainGeo.dispose();
+                terrainGeo = new THREE.PlaneBufferGeometry(100, 100, simRes - 1, simRes - 1);
+                terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+                scene.add(terrainMesh);
+
+                setupSimulation();
+            });
+
+            document.getElementById('btn-toggle').addEventListener('click', (e) => {
+                isRunning = !isRunning;
+                e.target.innerText = isRunning ? "Pausar" : "Continuar";
+            });
+
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                setupSimulation();
+            });
+
+            document.getElementById('btn-wireframe').addEventListener('click', () => {
+                terrainMat.wireframe = !terrainMat.wireframe;
+            });
+        }
+
+        window.onload = initApp;
+    </script>
 </body>
 </html>
