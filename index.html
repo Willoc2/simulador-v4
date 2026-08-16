@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeoSim 3D - Simulador Geológico Dinâmico</title>
+  <title>GeoSim 3D - Simulador Geológico</title>
   <style>
     :root {
-      --bg-panel: rgba(15, 23, 42, 0.92);
-      --border-panel: rgba(255, 255, 255, 0.12);
+      --bg-panel: rgba(15, 23, 42, 0.94);
+      --border-panel: rgba(255, 255, 255, 0.15);
       --accent: #38bdf8;
-      --accent-hover: #0284c7;
       --text: #f8fafc;
       --text-muted: #94a3b8;
     }
     body {
       margin: 0;
       overflow: hidden;
-      background: #080d1a;
+      background: #060913;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       user-select: none;
       color: var(--text);
@@ -31,10 +30,10 @@
       top: 14px;
       left: 14px;
       background: var(--bg-panel);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
       padding: 14px 16px;
       border-radius: 12px;
-      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
       border: 1px solid var(--border-panel);
       width: 290px;
       max-height: 94vh;
@@ -56,14 +55,13 @@
       font-size: 15px;
       font-weight: 700;
       color: var(--accent);
-      letter-spacing: -0.3px;
     }
     .badge {
-      font-size: 9.5px;
+      font-size: 10px;
       background: #16a34a;
       color: #f0fdf4;
-      padding: 2px 7px;
-      border-radius: 20px;
+      padding: 2px 8px;
+      border-radius: 12px;
       font-weight: 600;
     }
     .section-title {
@@ -97,18 +95,16 @@
       box-sizing: border-box;
       outline: none;
       font-size: 11.5px;
-      transition: all 0.2s ease;
     }
-    select:hover, input[type="range"]:hover { border-color: #475569; }
     input[type="range"] {
       padding: 0;
-      height: 5px;
+      height: 6px;
       accent-color: var(--accent);
       cursor: pointer;
     }
     .btn-row {
       display: flex;
-      gap: 5px;
+      gap: 6px;
       margin-top: 4px;
     }
     button, .file-btn {
@@ -118,6 +114,7 @@
       cursor: pointer;
       padding: 7px 10px;
       text-align: center;
+      transition: background 0.2s;
     }
     button:hover, .file-btn:hover { background: #0369a1; }
     button.active { background: #16a34a; }
@@ -172,43 +169,42 @@
 <body>
   <div id="canvas-container"></div>
 
-  <!-- Bússola Interativa -->
   <div id="compass" title="Clique para resetar rotação Norte">
     <div id="compass-needle"></div>
   </div>
 
   <div id="ui-panel">
     <div class="header-title">
-      <h2>GeoSim 3D Pro</h2>
+      <h2>GeoSim 3D</h2>
       <span class="badge" id="simStatus">Ativo</span>
     </div>
 
-    <!-- Rotação do Mapa e Terreno -->
+    <!-- Rotação do Terreno -->
     <div class="section-title">Orientação e Rotação</div>
     <div class="control-group">
       <label>Girar Terreno: <span id="rotVal">0°</span></label>
       <input type="range" id="terrainRotation" min="0" max="360" step="1" value="0">
     </div>
     <div class="btn-row">
-      <button id="btnAutoRotate" class="secondary">Auto Rotação: OFF</button>
+      <button id="btnAutoRotate" class="secondary">Auto Giro: OFF</button>
       <button id="btnResetView" class="secondary">Resetar Visão</button>
     </div>
 
-    <!-- Presets Geomorfológicos Realistas -->
-    <div class="section-title">Presets de Relevo</div>
+    <!-- Presets Geomorfológicos -->
+    <div class="section-title">Modelagem do Relevo</div>
     <div class="control-group">
       <select id="presetSelect">
-        <option value="cordilheira">Cordilheira com Cristas Agudas</option>
-        <option value="chapada">Chapada / Planalto Tabular</option>
+        <option value="cordilheira">Cordilheira com Cristas & Vales</option>
+        <option value="chapada">Chapada / Planalto com Escarpas</option>
         <option value="depressao">Depressão / Bacia Fechada</option>
-        <option value="planicie">Planície Aluvial</option>
-        <option value="dunas">Campo de Dunas Barcanas</option>
+        <option value="planicie">Planície Aluvial & Meandros</option>
+        <option value="dunas">Campo de Dunas Eólicas</option>
       </select>
     </div>
     <div class="btn-row">
       <label class="file-btn" for="heightmapInput" style="margin:0; font-size:11px;">Upload DEM</label>
       <input type="file" id="heightmapInput" class="file-input" accept="image/*">
-      <button id="btnResetTerrain" class="secondary" style="width: auto;">Regenerar</button>
+      <button id="btnRegenerate" class="secondary">Regenerar</button>
     </div>
 
     <div class="control-group" style="margin-top: 6px;">
@@ -216,29 +212,25 @@
       <input type="range" id="verticalScale" min="10" max="100" step="1" value="45">
     </div>
 
-    <!-- Hidrologia e Erosão Visível -->
+    <!-- Agente Hidrológico (Chuva, Rios e Erosão) -->
     <div class="section-title">
-      Erosão Hídrica & Chuva
-      <span style="color:#38bdf8; text-transform:none; font-size:10px;">Tempo Real</span>
+      Dinâmica Hídrica & Chuva
+      <span style="color:#38bdf8; text-transform:none; font-size:10px;">Ativo</span>
     </div>
     <div class="btn-row">
-      <button id="btnToggleRain" class="active">Simulação: ON</button>
-      <button id="btnDrainWater" class="secondary">Limpar Água</button>
+      <button id="btnToggleRain" class="active">Chuva: ON</button>
+      <button id="btnDrainWater" class="secondary">Secar Rios</button>
     </div>
     <div class="control-group" style="margin-top: 6px;">
-      <label>Gotas/Frame (Velocidade): <span id="rainVal">300</span></label>
-      <input type="range" id="rainIntensity" min="50" max="1200" step="50" value="300">
+      <label>Gotas/Frame (Erosão): <span id="rainVal">350</span></label>
+      <input type="range" id="rainIntensity" min="50" max="1200" step="50" value="350">
     </div>
     <div class="control-group">
-      <label>Potência da Erosão: <span id="erosionVal">0.45</span></label>
-      <input type="range" id="erosionRate" min="0.05" max="1.0" step="0.05" value="0.45">
-    </div>
-    <div class="control-group">
-      <label>Deposição de Sedimento: <span id="depoVal">0.20</span></label>
-      <input type="range" id="depoRate" min="0.02" max="0.6" step="0.02" value="0.20">
+      <label>Força de Escavação: <span id="erosionVal">0.50</span></label>
+      <input type="range" id="erosionRate" min="0.05" max="1.0" step="0.05" value="0.50">
     </div>
 
-    <!-- Dinâmica Eólica (Vento) -->
+    <!-- Agente Eólico (Vento) -->
     <div class="section-title">Agente Eólico (Vento)</div>
     <div class="btn-row">
       <button id="btnToggleWind" class="active">Vento: ON</button>
@@ -248,27 +240,27 @@
       <input type="range" id="windDirection" min="0" max="360" step="5" value="45">
     </div>
     <div class="control-group">
-      <label>Força do Vento: <span id="windSpeedVal">0.40</span></label>
+      <label>Velocidade do Vento: <span id="windSpeedVal">0.40</span></label>
       <input type="range" id="windSpeed" min="0" max="1.0" step="0.05" value="0.40">
     </div>
 
-    <!-- Escultura Livre -->
+    <!-- Escultura Manual -->
     <div class="section-title">Escultura Manual (Clique Esquerdo)</div>
     <div class="control-group">
-      <label>Ação: <span id="brushRadiusVal">Raio 20</span></label>
+      <label>Ação: <span id="brushRadiusVal">Raio 22</span></label>
       <select id="brushMode">
         <option value="raise">Elevar (Soerguimento)</option>
         <option value="lower">Escavar (Subsidência)</option>
+        <option value="water">Adicionar Fonte d'Água / Rio</option>
         <option value="smooth">Suavizar Encostas</option>
-        <option value="water">Adicionar Nascente d'Água</option>
       </select>
     </div>
-    <input type="range" id="brushRadius" min="6" max="50" value="20">
+    <input type="range" id="brushRadius" min="6" max="50" value="22">
 
     <div class="hint">
-      • <b>Erosão Rápida:</b> Vales em V e cânions se aprofundam a cada segundo.<br>
-      • <b>Escultura:</b> Clique com botão esquerdo e arraste sobre a terra.<br>
-      • <b>Navegação:</b> Botão direito / scroll para orbitar.
+      • <b>Rios e Lagos:</b> Azul vivo surge em tempo real nos caminhos de água.<br>
+      • <b>Chuva:</b> Gotas visíveis caindo e esculpindo o solo.<br>
+      • <b>Mouse:</b> Botão Esquerdo esculpe | Botão Direito gira câmera.
     </div>
   </div>
 
@@ -276,28 +268,28 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // --- Dimensões da Grade Topográfica ---
+    // --- Dimensões da Grade ---
     const GRID_SIZE = 128;
     const WORLD_SIZE = 220;
     const CELL_SIZE = WORLD_SIZE / (GRID_SIZE - 1);
 
     // Buffers Topográficos & Hidrológicos
     const terrainHeight = new Float32Array(GRID_SIZE * GRID_SIZE);
-    const waterHeight = new Float32Array(GRID_SIZE * GRID_SIZE);
-    const rawNormalizedTerrain = new Float32Array(GRID_SIZE * GRID_SIZE);
+    const waterLayer = new Float32Array(GRID_SIZE * GRID_SIZE);
+    const rawNormalized = new Float32Array(GRID_SIZE * GRID_SIZE);
 
     let maxVerticalElevation = 45.0;
 
-    // Configurações Físicas da Simulação
+    // Configurações Globais
     const config = {
       simRunning: true,
-      rainDrops: 300,
-      erosionSpeed: 0.45,
+      rainDrops: 350,
+      erosionSpeed: 0.50,
       depositSpeed: 0.20,
-      inertia: 0.18,
+      inertia: 0.20,
       capacityFactor: 4.5,
       minCapacity: 0.05,
-      evaporationRate: 0.025,
+      evaporationRate: 0.02,
       gravity: 5.0,
       maxLifetime: 35,
       windEnabled: true,
@@ -306,11 +298,11 @@
       autoRotate: false
     };
 
-    // --- Setup Three.js: Cena, Câmera e Renderizador ---
+    // --- Cena, Câmera e Renderizador ---
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x080d1a);
-    scene.fog = new THREE.FogExp2(0x080d1a, 0.0022);
+    scene.background = new THREE.Color(0x060913);
+    scene.fog = new THREE.FogExp2(0x060913, 0.0022);
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 1200);
     camera.position.set(0, 140, 210);
@@ -326,7 +318,7 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.mouseButtons = {
-      LEFT: THREE.MOUSE.NONE, // Escultura manual
+      LEFT: THREE.MOUSE.NONE,
       MIDDLE: THREE.MOUSE.DOLLY,
       RIGHT: THREE.MOUSE.ROTATE
     };
@@ -336,13 +328,11 @@
     scene.add(terrainGroup);
 
     // --- Iluminação ---
-    scene.add(new THREE.AmbientLight(0xdbeafe, 0.7));
-    const sunLight = new THREE.DirectionalLight(0xfffaed, 2.0);
-    sunLight.position.set(130, 180, 100);
+    scene.add(new THREE.AmbientLight(0xdbeafe, 0.75));
+    const sunLight = new THREE.DirectionalLight(0xfffaed, 2.2);
+    sunLight.position.set(120, 180, 90);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.set(2048, 2048);
-    sunLight.shadow.camera.near = 10;
-    sunLight.shadow.camera.far = 450;
     const d = 130;
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
@@ -350,126 +340,85 @@
     sunLight.shadow.camera.bottom = -d;
     scene.add(sunLight);
 
-    // --- Geometria do Terreno ---
+    // --- Geometria do Terreno com Vertex Colors ---
     const terrainGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, GRID_SIZE - 1, GRID_SIZE - 1);
     terrainGeo.rotateX(-Math.PI / 2);
 
+    const colors = new Float32Array(GRID_SIZE * GRID_SIZE * 3);
+    terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
     const terrainMat = new THREE.MeshStandardMaterial({
-      roughness: 0.88,
+      vertexColors: true,
+      roughness: 0.85,
       metalness: 0.05,
       flatShading: true
     });
-
-    terrainMat.onBeforeCompile = (shader) => {
-      shader.vertexShader = shader.vertexShader.replace(
-        '#include <common>',
-        `#include <common>
-varying float vHeight;`
-      ).replace(
-        '#include <begin_vertex>',
-        `#include <begin_vertex>
-vHeight = transformed.y;`
-      );
-
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <common>',
-        `#include <common>
-varying float vHeight;`
-      ).replace(
-        '#include <color_fragment>',
-        `
-        vec3 colValley    = vec3(0.14, 0.38, 0.18);
-        vec3 colPlain     = vec3(0.36, 0.54, 0.22);
-        vec3 colPlateau   = vec3(0.68, 0.52, 0.32);
-        vec3 colRock      = vec3(0.44, 0.40, 0.36);
-        vec3 colPeakSnow  = vec3(0.95, 0.96, 0.98);
-
-        float hNorm = clamp(vHeight / 48.0, 0.0, 1.0);
-        vec3 col = colValley;
-
-        if (hNorm < 0.20) {
-          col = mix(colValley, colPlain, hNorm / 0.20);
-        } else if (hNorm < 0.52) {
-          col = mix(colPlain, colPlateau, (hNorm - 0.20) / 0.32);
-        } else if (hNorm < 0.80) {
-          col = mix(colPlateau, colRock, (hNorm - 0.52) / 0.28);
-        } else {
-          col = mix(colRock, colPeakSnow, (hNorm - 0.80) / 0.20);
-        }
-
-        diffuseColor = vec4(col, 1.0);
-        `
-      );
-    };
 
     const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
     terrainMesh.receiveShadow = true;
     terrainMesh.castShadow = true;
     terrainGroup.add(terrainMesh);
 
-    // --- Geometria Dinâmica da Água Superficial ---
-    const waterGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, GRID_SIZE - 1, GRID_SIZE - 1);
-    waterGeo.rotateX(-Math.PI / 2);
-
-    const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x0284c7,
-      roughness: 0.1,
-      metalness: 0.8,
-      transparent: true,
-      opacity: 0.8,
-      side: THREE.DoubleSide
-    });
-
-    const waterMesh = new THREE.Mesh(waterGeo, waterMat);
-    waterMesh.receiveShadow = true;
-    terrainGroup.add(waterMesh);
-
-    // --- Sistema de Partículas de Chuva ---
-    const RAIN_COUNT = 2500;
+    // --- Partículas de Chuva Visíveis e Brilhantes ---
+    const RAIN_COUNT = 3000;
     const rainGeo = new THREE.BufferGeometry();
-    const rainPos = new Float32Array(RAIN_COUNT * 3);
-    const rainVels = new Float32Array(RAIN_COUNT);
+    const rainPositions = new Float32Array(RAIN_COUNT * 3);
+    const rainVelocities = new Float32Array(RAIN_COUNT);
 
     for (let i = 0; i < RAIN_COUNT; i++) {
-      rainPos[i * 3] = (Math.random() - 0.5) * WORLD_SIZE;
-      rainPos[i * 3 + 1] = 40 + Math.random() * 80;
-      rainPos[i * 3 + 2] = (Math.random() - 0.5) * WORLD_SIZE;
-      rainVels[i] = 1.4 + Math.random() * 1.6;
+      rainPositions[i * 3] = (Math.random() - 0.5) * WORLD_SIZE;
+      rainPositions[i * 3 + 1] = 20 + Math.random() * 90;
+      rainPositions[i * 3 + 2] = (Math.random() - 0.5) * WORLD_SIZE;
+      rainVelocities[i] = 1.8 + Math.random() * 2.2;
     }
-    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+
+    const dropCanvas = document.createElement('canvas');
+    dropCanvas.width = 32; dropCanvas.height = 32;
+    const ctxD = dropCanvas.getContext('2d');
+    const grad = ctxD.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    grad.addColorStop(0.3, 'rgba(56, 189, 248, 0.9)');
+    grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+    ctxD.fillStyle = grad;
+    ctxD.fillRect(0, 0, 32, 32);
+    const dropTexture = new THREE.CanvasTexture(dropCanvas);
+
     const rainMat = new THREE.PointsMaterial({
-      color: 0x93c5fd,
-      size: 1.1,
+      color: 0xffffff,
+      size: 4.5,
+      map: dropTexture,
       transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
     });
     const rainPoints = new THREE.Points(rainGeo, rainMat);
     scene.add(rainPoints);
 
-    // --- Sistema de Partículas de Vento & Poeira ---
-    const WIND_COUNT = 1200;
+    // --- Partículas de Vento (Poeira Dourada) ---
+    const WIND_COUNT = 1500;
     const windGeo = new THREE.BufferGeometry();
-    const windPos = new Float32Array(WIND_COUNT * 3);
-
+    const windPositions = new Float32Array(WIND_COUNT * 3);
     for (let i = 0; i < WIND_COUNT; i++) {
-      windPos[i * 3] = (Math.random() - 0.5) * WORLD_SIZE;
-      windPos[i * 3 + 1] = 5 + Math.random() * 30;
-      windPos[i * 3 + 2] = (Math.random() - 0.5) * WORLD_SIZE;
+      windPositions[i * 3] = (Math.random() - 0.5) * WORLD_SIZE;
+      windPositions[i * 3 + 1] = 5 + Math.random() * 35;
+      windPositions[i * 3 + 2] = (Math.random() - 0.5) * WORLD_SIZE;
     }
-    windGeo.setAttribute('position', new THREE.BufferAttribute(windPos, 3));
+    windGeo.setAttribute('position', new THREE.BufferAttribute(windPositions, 3));
     const windMat = new THREE.PointsMaterial({
       color: 0xfef08a,
-      size: 0.9,
+      size: 2.2,
       transparent: true,
-      opacity: 0.35,
-      blending: THREE.AdditiveBlending
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
     });
     const windPoints = new THREE.Points(windGeo, windMat);
     scene.add(windPoints);
 
-    // --- Algoritmo Simplex / FBM ---
-    class SimplexNoise2D {
+    // --- Algoritmo Simplex Noise 2D ---
+    class Simplex2D {
       constructor() {
         this.p = new Uint8Array(512);
         const perm = new Uint8Array(256);
@@ -489,75 +438,120 @@ varying float vHeight;`
         const t = (i + j) * G2;
         const X0 = i - t; const Y0 = j - t;
         const x0 = xin - X0; const y0 = yin - Y0;
-        let i1 = x0 > y0 ? 1 : 0, j1 = x0 > y0 ? 0 : 1;
-        const x1 = x0 - i1 + G2, y1 = y0 - j1 + G2;
-        const x2 = x0 - 1.0 + 2.0 * G2, y2 = y0 - 1.0 + 2.0 * G2;
-        const ii = i & 255, jj = j & 255;
+        const i1 = x0 > y0 ? 1 : 0;
+        const j1 = x0 > y0 ? 0 : 1;
+        const x1 = x0 - i1 + G2;
+        const y1 = y0 - j1 + G2;
+        const x2 = x0 - 1.0 + 2.0 * G2;
+        const y2 = y0 - 1.0 + 2.0 * G2;
+        const ii = i & 255; const jj = j & 255;
+
         let n0 = 0, n1 = 0, n2 = 0;
         let t0 = 0.5 - x0*x0 - y0*y0;
-        if (t0 >= 0) { t0 *= t0; n0 = t0 * t0 * this.grad(this.p[ii + this.p[jj]] % 8, x0, y0); }
+        if (t0 >= 0) {
+          t0 *= t0;
+          const gi0 = this.p[ii + this.p[jj]] % 8;
+          const u = gi0 < 4 ? x0 : y0; const v = gi0 < 4 ? y0 : x0;
+          n0 = t0 * t0 * (((gi0 & 1) === 0 ? u : -u) + ((gi0 & 2) === 0 ? v : -v));
+        }
         let t1 = 0.5 - x1*x1 - y1*y1;
-        if (t1 >= 0) { t1 *= t1; n1 = t1 * t1 * this.grad(this.p[ii + i1 + this.p[jj + j1]] % 8, x1, y1); }
+        if (t1 >= 0) {
+          t1 *= t1;
+          const gi1 = this.p[ii + i1 + this.p[jj + j1]] % 8;
+          const u = gi1 < 4 ? x1 : y1; const v = gi1 < 4 ? y1 : x1;
+          n1 = t1 * t1 * (((gi1 & 1) === 0 ? u : -u) + ((gi1 & 2) === 0 ? v : -v));
+        }
         let t2 = 0.5 - x2*x2 - y2*y2;
-        if (t2 >= 0) { t2 *= t2; n2 = t2 * t2 * this.grad(this.p[ii + 1 + this.p[jj + 1]] % 8, x2, y2); }
+        if (t2 >= 0) {
+          t2 *= t2;
+          const gi2 = this.p[ii + 1 + this.p[jj + 1]] % 8;
+          const u = gi2 < 4 ? x2 : y2; const v = gi2 < 4 ? y2 : x2;
+          n2 = t2 * t2 * (((gi2 & 1) === 0 ? u : -u) + ((gi2 & 2) === 0 ? v : -v));
+        }
         return 70.0 * (n0 + n1 + n2);
       }
-      grad(hash, x, y) {
-        const u = hash < 4 ? x : y, v = hash < 4 ? y : x;
-        return ((hash & 1) === 0 ? u : -u) + ((hash & 2) === 0 ? v : -v);
-      }
-      fbm(x, y, octaves = 5) {
-        let total = 0, frequency = 1, amplitude = 1, maxVal = 0;
-        for (let i = 0; i < octaves; i++) {
-          total += this.noise(x * frequency, y * frequency) * amplitude;
-          maxVal += amplitude;
-          amplitude *= 0.5;
-          frequency *= 2.0;
+      fbm(x, y, oct = 5) {
+        let val = 0, amp = 1, freq = 1, maxA = 0;
+        for (let o = 0; o < oct; o++) {
+          val += this.noise(x * freq, y * freq) * amp;
+          maxA += amp;
+          amp *= 0.5;
+          freq *= 2.0;
         }
-        return total / maxVal;
+        return val / maxA;
       }
-      ridgedFBM(x, y, octaves = 5) {
-        let total = 0, frequency = 1, amplitude = 1, weight = 1;
-        for (let i = 0; i < octaves; i++) {
-          let signal = 1.0 - Math.abs(this.noise(x * frequency, y * frequency));
-          signal = signal * signal * weight;
-          weight = Math.min(1.0, Math.max(0.0, signal * 2.0));
-          total += signal * amplitude;
-          amplitude *= 0.5;
-          frequency *= 2.0;
+      ridged(x, y, oct = 5) {
+        let val = 0, amp = 1, freq = 1, weight = 1;
+        for (let o = 0; o < oct; o++) {
+          let s = 1.0 - Math.abs(this.noise(x * freq, y * freq));
+          s = s * s * weight;
+          weight = Math.min(1.0, Math.max(0.0, s * 2.0));
+          val += s * amp;
+          amp *= 0.5;
+          freq *= 2.0;
         }
-        return total;
+        return val;
       }
     }
 
-    const simplex = new SimplexNoise2D();
+    let simplex = new Simplex2D();
 
-    // --- Atualização Imediata das Malhas ---
+    // --- Atualização da Geometria e das Cores Hipsométricas / Rios ---
     function updateTerrainMesh() {
-      const posT = terrainGeo.attributes.position;
-      const posW = waterGeo.attributes.position;
+      const pos = terrainGeo.attributes.position;
+      const col = terrainGeo.attributes.color;
 
       for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-        const th = terrainHeight[i];
-        posT.setY(i, th);
+        const h = terrainHeight[i];
+        pos.setY(i, h);
 
-        const wh = waterHeight[i];
-        if (wh > 0.05) {
-          posW.setY(i, th + wh);
+        const hNorm = Math.min(1.0, Math.max(0.0, h / maxVerticalElevation));
+        const w = waterLayer[i];
+
+        let r = 0, g = 0, b = 0;
+
+        if (w > 0.08) {
+          const waterIntensity = Math.min(1.0, w / 1.5);
+          r = THREE.MathUtils.lerp(0.08, 0.1, waterIntensity);
+          g = THREE.MathUtils.lerp(0.45, 0.75, waterIntensity);
+          b = THREE.MathUtils.lerp(0.85, 1.0, waterIntensity);
         } else {
-          posW.setY(i, th - 2.0); // Esconde a malha de água abaixo do solo
+          if (hNorm < 0.20) {
+            const t = hNorm / 0.20;
+            r = THREE.MathUtils.lerp(0.14, 0.36, t);
+            g = THREE.MathUtils.lerp(0.40, 0.58, t);
+            b = THREE.MathUtils.lerp(0.18, 0.22, t);
+          } else if (hNorm < 0.55) {
+            const t = (hNorm - 0.20) / 0.35;
+            r = THREE.MathUtils.lerp(0.36, 0.70, t);
+            g = THREE.MathUtils.lerp(0.58, 0.52, t);
+            b = THREE.MathUtils.lerp(0.22, 0.32, t);
+          } else if (hNorm < 0.82) {
+            const t = (hNorm - 0.55) / 0.27;
+            r = THREE.MathUtils.lerp(0.70, 0.44, t);
+            g = THREE.MathUtils.lerp(0.52, 0.40, t);
+            b = THREE.MathUtils.lerp(0.32, 0.36, t);
+          } else {
+            const t = (hNorm - 0.82) / 0.18;
+            r = THREE.MathUtils.lerp(0.44, 0.96, t);
+            g = THREE.MathUtils.lerp(0.40, 0.97, t);
+            b = THREE.MathUtils.lerp(0.36, 1.00, t);
+          }
         }
+
+        col.setXYZ(i, r, g, b);
       }
 
-      posT.needsUpdate = true;
-      posW.needsUpdate = true;
+      pos.needsUpdate = true;
+      col.needsUpdate = true;
       terrainGeo.computeVertexNormals();
-      waterGeo.computeVertexNormals();
     }
 
-    // --- Presets de Relevo ---
+    // --- Gerador de Presets Geomorfológicos ---
     function generatePreset(type) {
       const center = GRID_SIZE / 2;
+      waterLayer.fill(0);
+
       for (let i = 0; i < GRID_SIZE; i++) {
         for (let j = 0; j < GRID_SIZE; j++) {
           const idx = i * GRID_SIZE + j;
@@ -570,8 +564,8 @@ varying float vHeight;`
           let normH = 0;
 
           if (type === 'cordilheira') {
-            const ridge = simplex.ridgedFBM(u * 3.2, v * 3.2, 5);
-            const valley = simplex.fbm(u * 1.5, v * 1.5, 3) * 0.2;
+            const ridge = simplex.ridged(u * 3.2, v * 3.2, 5);
+            const valley = simplex.fbm(u * 1.5, v * 1.5, 3) * 0.25;
             normH = Math.max(0.05, (ridge * 0.75 + valley) - 0.1);
           } else if (type === 'chapada') {
             const baseNoise = simplex.fbm(u * 2.0, v * 2.0, 4) * 0.08;
@@ -581,6 +575,9 @@ varying float vHeight;`
             const rim = Math.min(1.0, Math.pow(dist * 1.4, 2.0));
             const innerDetail = simplex.fbm(u * 4.0, v * 4.0, 4) * 0.1;
             normH = Math.max(0.05, rim * 0.75 + innerDetail - 0.22);
+            if (normH < 0.18) {
+              waterLayer[idx] = (0.18 - normH) * 8.0;
+            }
           } else if (type === 'planicie') {
             const meander = Math.sin(u * 8.0 + simplex.noise(u * 3, v * 3) * 3.0) * 0.04;
             normH = 0.10 + simplex.fbm(u * 1.8, v * 1.8, 3) * 0.06 + meander;
@@ -589,15 +586,14 @@ varying float vHeight;`
             normH = 0.15 + (Math.max(0, wave1) * 0.2) + simplex.fbm(u * 3, v * 3, 3) * 0.1;
           }
 
-          rawNormalizedTerrain[idx] = normH;
+          rawNormalized[idx] = normH;
           terrainHeight[idx] = normH * maxVerticalElevation;
-          waterHeight[idx] = (type === 'depressao' && normH < 0.18) ? (0.18 - normH) * 15.0 : 0.0;
         }
       }
       updateTerrainMesh();
     }
 
-    // --- Interpolação Bilinear de Altura e Gradiente ---
+    // --- Interpolação de Altura e Gradiente ---
     function getHeightAndGradient(posX, posZ) {
       const gx = ((posX / WORLD_SIZE) + 0.5) * (GRID_SIZE - 1);
       const gz = ((posZ / WORLD_SIZE) + 0.5) * (GRID_SIZE - 1);
@@ -627,7 +623,7 @@ varying float vHeight;`
       return { height, gradX, gradZ, valid: true };
     }
 
-    // --- Algoritmo de Erosão Hidráulica por Gotas (Deformação Forte e Rápida) ---
+    // --- Erosão Hidráulica Dinâmica ---
     function simulateDroplet() {
       let posX = (Math.random() - 0.5) * (WORLD_SIZE - 6);
       let posZ = (Math.random() - 0.5) * (WORLD_SIZE - 6);
@@ -671,8 +667,7 @@ varying float vHeight;`
           terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - erodeAmount);
         }
 
-        // Deixa lâmina de água no caminho para formar cursos fluviais
-        waterHeight[idx] = Math.min(waterHeight[idx] + 0.08 * water, 2.5);
+        waterLayer[idx] = Math.min(waterLayer[idx] + 0.15 * water, 2.0);
 
         speed = Math.sqrt(Math.max(0, speed * speed + deltaH * config.gravity));
         water *= (1 - config.evaporationRate);
@@ -681,21 +676,7 @@ varying float vHeight;`
       }
     }
 
-    // --- Escoamento Superficial & Evaporação da Água ---
-    function stepWaterSimulation() {
-      for (let i = 0; i < GRID_SIZE; i++) {
-        for (let j = 0; j < GRID_SIZE; j++) {
-          const idx = i * GRID_SIZE + j;
-          if (waterHeight[idx] > 0.01) {
-            waterHeight[idx] *= 0.992; // Evaporação contínua
-          } else {
-            waterHeight[idx] = 0;
-          }
-        }
-      }
-    }
-
-    // --- Simulação Eólica (Vento & Dunas) ---
+    // --- Simulação Eólica ---
     function stepWindSimulation() {
       if (!config.windEnabled || config.windSpeed <= 0.01) return;
 
@@ -723,13 +704,13 @@ varying float vHeight;`
       }
     }
 
-    // --- Partículas Visuais ---
+    // --- Atualização de Partículas Visuais ---
     function updateVisualParticles() {
       if (config.simRunning) {
         rainPoints.visible = true;
         const pos = rainGeo.attributes.position.array;
         for (let i = 0; i < RAIN_COUNT; i++) {
-          pos[i * 3 + 1] -= rainVels[i];
+          pos[i * 3 + 1] -= rainVelocities[i];
           if (pos[i * 3 + 1] <= 0) {
             pos[i * 3] = (Math.random() - 0.5) * WORLD_SIZE;
             pos[i * 3 + 1] = 60 + Math.random() * 60;
@@ -750,7 +731,7 @@ varying float vHeight;`
         for (let i = 0; i < WIND_COUNT; i++) {
           pos[i * 3] += vx;
           pos[i * 3 + 2] += vz;
-          pos[i * 3 + 1] += (Math.random() - 0.5) * 0.4;
+          pos[i * 3 + 1] += (Math.random() - 0.5) * 0.3;
 
           const limit = WORLD_SIZE / 2;
           if (pos[i * 3] > limit || pos[i * 3] < -limit || pos[i * 3 + 2] > limit || pos[i * 3 + 2] < -limit) {
@@ -765,15 +746,14 @@ varying float vHeight;`
       }
     }
 
-    // --- Pincel Manual (Raycast com Correção de Matriz de Rotação) ---
+    // --- Pincel Manual ---
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let isMouseDown = false;
-    let brushRadius = 20;
+    let brushRadius = 22;
     let brushMode = 'raise';
 
     function applyBrush(worldPoint) {
-      // Converte o ponto do mundo para o espaço de coordenadas do terreno (mesmo rotacionado)
       const local = terrainMesh.worldToLocal(worldPoint.clone());
       const rSq = brushRadius * brushRadius;
 
@@ -787,11 +767,11 @@ varying float vHeight;`
           if (dSq < rSq) {
             const factor = Math.cos((Math.sqrt(dSq) / brushRadius) * (Math.PI / 2));
             if (brushMode === 'raise') {
-              terrainHeight[idx] += 1.2 * factor;
+              terrainHeight[idx] += 1.4 * factor;
             } else if (brushMode === 'lower') {
-              terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - 1.2 * factor);
+              terrainHeight[idx] = Math.max(0.5, terrainHeight[idx] - 1.4 * factor);
             } else if (brushMode === 'water') {
-              waterHeight[idx] += 2.0 * factor;
+              waterLayer[idx] += 1.8 * factor;
             } else if (brushMode === 'smooth') {
               const iPrev = Math.max(0, i - 1) * GRID_SIZE + j;
               const iNext = Math.min(GRID_SIZE - 1, i + 1) * GRID_SIZE + j;
@@ -816,9 +796,7 @@ varying float vHeight;`
     window.addEventListener('pointermove', (e) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      if (isMouseDown) {
-        castAndApply(e);
-      }
+      if (isMouseDown) castAndApply(e);
     });
 
     function castAndApply(e) {
@@ -827,7 +805,8 @@ varying float vHeight;`
       if (hits.length > 0) applyBrush(hits[0].point);
     }
 
-    // --- Conexão de Eventos UI ---
+    // --- UI Controls & Listeners ---
+
     const terrainRotSlider = document.getElementById('terrainRotation');
     terrainRotSlider.addEventListener('input', (e) => {
       const deg = parseFloat(e.target.value);
@@ -839,7 +818,7 @@ varying float vHeight;`
     const btnAutoRotate = document.getElementById('btnAutoRotate');
     btnAutoRotate.addEventListener('click', () => {
       config.autoRotate = !config.autoRotate;
-      btnAutoRotate.innerText = config.autoRotate ? 'Auto Rotação: ON' : 'Auto Rotação: OFF';
+      btnAutoRotate.innerText = config.autoRotate ? 'Auto Giro: ON' : 'Auto Giro: OFF';
       btnAutoRotate.className = config.autoRotate ? 'active' : 'secondary';
     });
 
@@ -865,8 +844,13 @@ varying float vHeight;`
     });
 
     const presetSelect = document.getElementById('presetSelect');
-    presetSelect.addEventListener('change', (e) => generatePreset(e.target.value));
-    document.getElementById('btnResetTerrain').addEventListener('click', () => generatePreset(presetSelect.value));
+    presetSelect.addEventListener('change', (e) => {
+      generatePreset(e.target.value);
+    });
+    document.getElementById('btnRegenerate').addEventListener('click', () => {
+      simplex = new Simplex2D();
+      generatePreset(presetSelect.value);
+    });
 
     document.getElementById('verticalScale').addEventListener('input', (e) => {
       const oldMax = maxVerticalElevation;
@@ -882,13 +866,13 @@ varying float vHeight;`
     const btnToggleRain = document.getElementById('btnToggleRain');
     btnToggleRain.addEventListener('click', () => {
       config.simRunning = !config.simRunning;
-      btnToggleRain.innerText = config.simRunning ? 'Simulação: ON' : 'Simulação: OFF';
+      btnToggleRain.innerText = config.simRunning ? 'Chuva: ON' : 'Chuva: OFF';
       btnToggleRain.className = config.simRunning ? 'active' : 'secondary';
       document.getElementById('simStatus').innerText = config.simRunning ? 'Ativo' : 'Pausado';
     });
 
     document.getElementById('btnDrainWater').addEventListener('click', () => {
-      waterHeight.fill(0);
+      waterLayer.fill(0);
       updateTerrainMesh();
     });
 
@@ -900,11 +884,6 @@ varying float vHeight;`
     document.getElementById('erosionRate').addEventListener('input', (e) => {
       config.erosionSpeed = parseFloat(e.target.value);
       document.getElementById('erosionVal').innerText = e.target.value;
-    });
-
-    document.getElementById('depoRate').addEventListener('input', (e) => {
-      config.depositSpeed = parseFloat(e.target.value);
-      document.getElementById('depoVal').innerText = e.target.value;
     });
 
     const btnToggleWind = document.getElementById('btnToggleWind');
@@ -950,9 +929,9 @@ varying float vHeight;`
 
           for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
             const gray = (data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114) / 255.0;
-            rawNormalizedTerrain[i] = gray;
+            rawNormalized[i] = gray;
             terrainHeight[i] = gray * maxVerticalElevation;
-            waterHeight[i] = 0;
+            waterLayer[i] = 0;
           }
           updateTerrainMesh();
         };
@@ -970,25 +949,33 @@ varying float vHeight;`
     // Início com Cordilheira
     generatePreset('cordilheira');
 
-    // --- Loop Principal de Animação e Simulação Física ---
+    // --- Loop de Animação ---
     function animate() {
       requestAnimationFrame(animate);
 
       if (config.autoRotate) {
-        terrainGroup.rotation.y += 0.003;
-        terrainRotSlider.value = THREE.MathUtils.radToDeg(terrainGroup.rotation.y) % 360;
-        document.getElementById('rotVal').innerText = `${Math.round(terrainRotSlider.value)}°`;
+        terrainGroup.rotation.y += 0.004;
+        const currentDeg = THREE.MathUtils.radToDeg(terrainGroup.rotation.y) % 360;
+        terrainRotSlider.value = currentDeg;
+        document.getElementById('rotVal').innerText = `${Math.round(currentDeg)}°`;
         updateCompass();
       }
 
       if (config.simRunning) {
-        // Executa lote de gotas de erosão hidráulica (deformação visível e contínua)
         for (let i = 0; i < config.rainDrops; i++) {
           simulateDroplet();
         }
-        stepWaterSimulation();
+
+        for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+          if (waterLayer[i] > 0.01) {
+            waterLayer[i] *= 0.994;
+          } else {
+            waterLayer[i] = 0;
+          }
+        }
+
         stepWindSimulation();
-        updateTerrainMesh(); // Atualiza a malha a cada frame da física
+        updateTerrainMesh();
       }
 
       updateVisualParticles();
