@@ -12,6 +12,7 @@ header h1{font-size:1rem;color:#38bdf8;}
 .canvas-container{flex:1;position:relative;background:#000;overflow:hidden;}
 #atmCanvas{width:100%;height:100%;display:block;cursor:grab;touch-action:none;}
 #atmCanvas.dragging{cursor:grabbing;}
+.canvas-container.iso{background:radial-gradient(ellipse at 50% 40%,#17243d 0%,#0b1222 62%,#05070d 100%);}
 .side-panel{width:400px;background:#1e293b;border-left:1px solid #334155;padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
 .card{background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:8px;padding:11px;}
 .card-title{font-size:.75rem;font-weight:600;color:#38bdf8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
@@ -50,12 +51,69 @@ button.full:hover{background:#475569;}
 .mode-nav{display:flex;gap:2px;padding-top:6px;}
 .mode-nav button{background:#0f172a;color:#94a3b8;border:1px solid #334155;border-bottom:none;padding:7px 12px;font-size:.72rem;cursor:pointer;border-radius:6px 6px 0 0;}
 .mode-nav button.active{background:#1e293b;color:#38bdf8;font-weight:bold;border-color:#38bdf8;}
+.ic{width:1.15em;height:1.15em;display:inline-block;vertical-align:-.2em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible;}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-globe" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0 -20 0a10 10 0 1 0 20 0"/><path d="M12 2c2.8 2.8 4.2 6.2 4.2 10s-1.4 7.2-4.2 10c-2.8-2.8-4.2-6.2-4.2-10S9.2 4.8 12 2"/><path d="M2 12h20"/></symbol>
+<symbol id="i-globe-grid" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0 -20 0a10 10 0 1 0 20 0"/><path d="M12 2v20"/><path d="M3.5 7.5h17"/><path d="M3.5 16.5h17"/><path d="M12 2c-3 3-4.2 6.5-4.2 10s1.2 7 4.2 10"/><path d="M12 2c3 3 4.2 6.5 4.2 10s-1.2 7-4.2 10"/></symbol>
+<symbol id="i-book-open" viewBox="0 0 24 24"><path d="M2 4.5C4.5 3 8 3 12 5.5c4-2.5 7.5-2.5 10-1V19c-2.5-1.5-6-1.5-10 1-4-2.5-7.5-2.5-10-1z"/><path d="M12 5.5V20"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9"/><path d="M17 6h3"/><path d="M17 6a2 2 0 1 0 -4 0a2 2 0 1 0 4 0"/><path d="M4 12h3"/><path d="M11 12h9"/><path d="M11 12a2 2 0 1 0 -4 0a2 2 0 1 0 4 0"/><path d="M4 18h11"/><path d="M19 18h1"/><path d="M19 18a2 2 0 1 0 -4 0a2 2 0 1 0 4 0"/></symbol>
+<symbol id="i-balloon" viewBox="0 0 24 24"><path d="M12 3c-3.3 0-6 2.6-6 6 0 3.6 3 6.3 6 8 3-1.7 6-4.4 6-8 0-3.4-2.7-6-6-6z"/><path d="M12 17v2"/><path d="M10 19h4v2.5h-4z"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><path d="M16 12a4 4 0 1 0 -8 0a4 4 0 1 0 8 0"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.9 4.9l1.4 1.4"/><path d="M17.7 17.7l1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.9 19.1l1.4-1.4"/><path d="M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><path d="M18 11a7 7 0 1 0 -14 0a7 7 0 1 0 14 0"/><path d="M21 21l-4.3-4.3"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></symbol>
+<symbol id="i-bar-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V7"/><path d="M18 17v-8"/></symbol>
+<symbol id="i-network" viewBox="0 0 24 24"><path d="M14.5 12a2.5 2.5 0 1 0 -5.0 0a2.5 2.5 0 1 0 5.0 0"/><path d="M7 5a2 2 0 1 0 -4 0a2 2 0 1 0 4 0"/><path d="M21 5a2 2 0 1 0 -4 0a2 2 0 1 0 4 0"/><path d="M7 19a2 2 0 1 0 -4 0a2 2 0 1 0 4 0"/><path d="M21 19a2 2 0 1 0 -4 0a2 2 0 1 0 4 0"/><path d="M6.5 6.5l3.7 3.7"/><path d="M17.5 6.5l-3.7 3.7"/><path d="M6.5 17.5l3.7-3.7"/><path d="M17.5 17.5l-3.7-3.7"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z"/><path d="M15 10a3 3 0 1 0 -6 0a3 3 0 1 0 6 0"/></symbol>
+<symbol id="i-satellite" viewBox="0 0 24 24"><path d="M13 7L9 3 5 7l4 4"/><path d="M17 11l4 4-4 4-4-4"/><path d="M8 12l4 4 6-6-4-4z"/><path d="M16 8l3-3"/><path d="M9 21a6 6 0 0 0-6-6"/></symbol>
+<symbol id="i-mountain" viewBox="0 0 24 24"><path d="M2 20L9 7l4.5 8 3-4.5L22 20z"/></symbol>
+<symbol id="i-mountain-snow" viewBox="0 0 24 24"><path d="M2 20L9.5 6l4 7 2.5-4L22 20z"/><path d="M7 11.5l2.5 2 2-1.5"/></symbol>
+<symbol id="i-compass" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0 -20 0a10 10 0 1 0 20 0"/><path d="M16.2 7.8l-2 6.4-6.4 2 2-6.4z"/></symbol>
+<symbol id="i-mouse-pointer" viewBox="0 0 24 24"><path d="M3 3l7.1 17 2.5-7.4 7.4-2.5z"/><path d="M13 13l6 6"/></symbol>
+<symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16"/><path d="M14 10h5a1 1 0 0 1 1 1v10"/><path d="M2 21h20"/><path d="M8 8h2"/><path d="M8 12h2"/><path d="M8 16h2"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M7 21h10"/><path d="M5 6h14"/><path d="M5 6l-3 7a3 3 0 0 0 6 0z"/><path d="M19 6l-3 7a3 3 0 0 0 6 0z"/></symbol>
+<symbol id="i-beach" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 1 9 9H3a9 9 0 0 1 9-9z"/><path d="M12 12v6"/><path d="M3 21c3-2 6-2 9 0s6 2 9 0"/></symbol>
+<symbol id="i-umbrella" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 1 9 9H3a9 9 0 0 1 9-9z"/><path d="M12 12v6a2 2 0 0 1-4 0"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0 -20 0a10 10 0 1 0 20 0"/><path d="M18 12a6 6 0 1 0 -12 0a6 6 0 1 0 12 0"/><path d="M14 12a2 2 0 1 0 -4 0a2 2 0 1 0 4 0"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0 -20 0a10 10 0 1 0 20 0"/><path d="M8 12.5l2.7 2.7L16 9.5"/></symbol>
+<symbol id="i-x-circle" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0 -20 0a10 10 0 1 0 20 0"/><path d="M9 9l6 6"/><path d="M15 9l-6 6"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5"/><path d="M2 17l10 5 10-5"/></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.3c1.9 0 3.7-1.4 3.7-3.7C21 6.5 17 3 12 3z"/><path d="M7.5 11h.01"/><path d="M10.5 7.5h.01"/><path d="M15 7.5h.01"/></symbol>
+<symbol id="i-aurora" viewBox="0 0 24 24"><path d="M5 21c3-4 3-9 0-14"/><path d="M12 21c3-5 3-11 0-18"/><path d="M19 21c3-4 3-9 0-14"/></symbol>
+<symbol id="i-cloud-rain" viewBox="0 0 24 24"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11 3l1.9 5.6L18.5 10.5l-5.6 1.9L11 18l-1.9-5.6L3.5 10.5l5.6-1.9z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+<symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 2l6 9h-3l4 6H5l4-6H6z"/><path d="M12 17v5"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5z"/></symbol>
+<symbol id="i-cyclone" viewBox="0 0 24 24"><path d="M12 12c0-1.5 1.5-2 2.5-1.2 1.2 1 .8 3-.8 3.7-2.3 1-4.8-.7-4.7-3.2.1-3 3-5 6-4.5 3.5.6 5.3 4.5 4 7.7-1.5 3.6-6 5-9.5 3.2"/></symbol>
+<symbol id="i-ruler" viewBox="0 0 24 24"><path d="M4 20V4l16 16z"/><path d="M4 15h3"/><path d="M4 10h2"/><path d="M9 20v-3"/><path d="M14 20v-2"/></symbol>
+<symbol id="i-waves" viewBox="0 0 24 24"><path d="M2 8c1.7-1.6 3.3-1.6 5 0s3.3 1.6 5 0 3.3-1.6 5 0 3.3 1.6 5 0"/><path d="M2 13c1.7-1.6 3.3-1.6 5 0s3.3 1.6 5 0 3.3-1.6 5 0 3.3 1.6 5 0"/><path d="M2 18c1.7-1.6 3.3-1.6 5 0s3.3 1.6 5 0 3.3-1.6 5 0 3.3 1.6 5 0"/></symbol>
+<symbol id="i-desert" viewBox="0 0 24 24"><path d="M8 13a4 4 0 0 1 8 0"/><path d="M12 5v2"/><path d="M5.6 8.6L7 10"/><path d="M18.4 8.6L17 10"/><path d="M2 17c4-3 8-3 10 0s6 3 10 0"/><path d="M2 21h20"/></symbol>
+<symbol id="i-snowflake" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M2 12h20"/><path d="M4.9 4.9l14.2 14.2"/><path d="M19.1 4.9L4.9 19.1"/><path d="M9 4l3 2 3-2"/><path d="M9 20l3-2 3 2"/></symbol>
+<symbol id="i-wind" viewBox="0 0 24 24"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></symbol>
+<symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></symbol>
+<symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></symbol>
+<symbol id="i-help-circle" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0 -20 0a10 10 0 1 0 20 0"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-wheat" viewBox="0 0 24 24"><path d="M12 22V8"/><path d="M12 8c-1.5-2-1.5-4 0-6 1.5 2 1.5 4 0 6z"/><path d="M12 14c-3 0-5-1.5-5-4 2.5 0 5 1 5 4z"/><path d="M12 14c0-3 2.5-4 5-4 0 2.5-2 4-5 4z"/><path d="M12 20c-3 0-5-1.5-5-4 2.5 0 5 1 5 4z"/><path d="M12 20c0-3 2.5-4 5-4 0 2.5-2 4-5 4z"/></symbol>
+<symbol id="i-factory" viewBox="0 0 24 24"><path d="M2 21V11l6 3.5V11l6 3.5V4h6v17z"/><path d="M6 21v-3"/><path d="M12 21v-3"/></symbol>
+<symbol id="i-window" viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M12 3v18"/><path d="M3 12h18"/></symbol>
+<symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 2.7c4 4.5 6.5 7.6 6.5 11a6.5 6.5 0 0 1-13 0c0-3.4 2.5-6.5 6.5-11z"/></symbol>
+<symbol id="i-thermometer" viewBox="0 0 24 24"><path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/></symbol>
+<symbol id="i-dot-red" viewBox="0 0 24 24"><path d="M18 12a6 6 0 1 0 -12 0a6 6 0 1 0 12 0" fill="#ef4444" stroke="none"/></symbol>
+<symbol id="i-dot-yellow" viewBox="0 0 24 24"><path d="M18 12a6 6 0 1 0 -12 0a6 6 0 1 0 12 0" fill="#fbbf24" stroke="none"/></symbol>
+<symbol id="i-dot-orange" viewBox="0 0 24 24"><path d="M18 12a6 6 0 1 0 -12 0a6 6 0 1 0 12 0" fill="#fb923c" stroke="none"/></symbol>
+<symbol id="i-dot-white" viewBox="0 0 24 24"><path d="M18 12a6 6 0 1 0 -12 0a6 6 0 1 0 12 0" fill="#e2e8f0" stroke="none"/></symbol>
+<symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5"/><path d="M12 12v10"/></symbol>
+</defs></svg>
 
 <header>
-  <h1>🌍 Simulador Atmosférico 2D v6.5 | Geografia 1º Ano EM</h1>
+  <h1><svg class=ic><use href=#i-globe></use></svg> Simulador Atmosférico 2D v6.5 | Geografia 1º Ano EM</h1>
   <nav class="mode-nav" id="modeNav"></nav>
 </header>
 
@@ -63,12 +121,47 @@ button.full:hover{background:#475569;}
   <div class="canvas-container">
     <canvas id="atmCanvas"></canvas>
     <div class="legend" id="legend"></div>
-    <div class="zoom-badge" id="zoomBadge">🔍 1.0×</div>
+    <div class="zoom-badge" id="zoomBadge"><svg class=ic><use href=#i-search></use></svg> 1.0×</div>
   </div>
   <div class="side-panel" id="sidePanel"></div>
 </div>
 
 <script>
+/* ---------- ícones SVG também no canvas: {{i:nome}} dentro de fillText/measureText ---------- */
+(function(){
+  const RE=/\{\{i:([a-z0-9-]+)\}\}/, cache={};
+  function icon(n){
+    if (cache[n]) return cache[n];
+    const sym=document.getElementById('i-'+n), L=[];
+    if (sym) sym.querySelectorAll('path').forEach(p=>{ const f=p.getAttribute('fill'); L.push({p:new Path2D(p.getAttribute('d')), fill:(f&&f!=='none')?f:null}); });
+    return cache[n]=L;
+  }
+  const P=CanvasRenderingContext2D.prototype, _fill=P.fillText, _meas=P.measureText;
+  const fsz=c=>{ const m=/(\d+(?:\.\d+)?)px/.exec(c.font); return m?parseFloat(m[1]):12; };
+  P.measureText=function(t){
+    if (typeof t!=='string'||t.indexOf('{{i:')<0) return _meas.call(this,t);
+    const s=fsz(this), a=t.split(/\{\{i:([a-z0-9-]+)\}\}/); let w=0;
+    a.forEach((x,i)=>{ w += i%2 ? s*1.05 : (x?_meas.call(this,x).width:0); });
+    return {width:w};
+  };
+  P.fillText=function(t,x,y,mw){
+    if (typeof t!=='string'||t.indexOf('{{i:')<0) return _fill.call(this,t,x,y,mw);
+    const s=fsz(this), a=t.split(/\{\{i:([a-z0-9-]+)\}\}/), W=this.measureText(t).width;
+    const al=this.textAlign, bl=this.textBaseline, col=this.fillStyle;
+    let cx = al==='center' ? x-W/2 : (al==='right'||al==='end' ? x-W : x);
+    const iy = bl==='middle' ? y-s/2 : (bl==='top'||bl==='hanging' ? y : (bl==='bottom'||bl==='ideographic' ? y-s : y-s*0.86));
+    this.save(); this.textAlign='left';
+    a.forEach((seg,i)=>{
+      if (i%2){
+        this.save(); this.translate(cx,iy); this.scale(s/24,s/24);
+        this.lineWidth=2.2; this.lineCap='round'; this.lineJoin='round'; this.strokeStyle=col;
+        icon(seg).forEach(o=>{ if(o.fill){ this.fillStyle=o.fill; this.fill(o.p); } else this.stroke(o.p); });
+        this.restore(); cx+=s*1.05;
+      } else if (seg){ _fill.call(this,seg,cx,y); cx+=_meas.call(this,seg).width; }
+    });
+    this.restore();
+  };
+})();
 'use strict';
 
 function $(id){ return document.getElementById(id); }
@@ -81,6 +174,16 @@ function range(id,label,valId,min,max,val,unit,step){
 
 const canvas = $('atmCanvas');
 const ctx = canvas.getContext('2d');
+/* Visão isométrica: a cena 2D continua sendo desenhada normalmente; aqui só mudam a projeção (CSS 3D ortogonal) e o mapeamento do mouse. */
+const ISO = { on:false, inv:null, S:null, q:[], Wb:0, D:0, cx0:0, cy0:0 };
+/* slot(f, fn): desenha fn() na hora (vista normal) ou, na vista isométrica, na profundidade f (-0.5 fundo … +0.5 frente) */
+function slot(f, fn, opt){ if (!ISO.on){ fn(); return; } ISO.q.push({ f:f, fn:fn, opt:opt || '', i:ISO.q.length }); }
+function cxy(clientX, clientY){                      // coordenadas do cliente → coordenadas da cena (canvas)
+  const r = canvas.getBoundingClientRect();
+  let x = clientX - r.left, y = clientY - r.top;
+  if (ISO.on && ISO.inv){ const p = ISO.inv.transformPoint(new DOMPoint(x, y)); x = p.x; y = p.y; }
+  return { x, y };
+}
 let W = 800, H = 600;
 const LEGEND_HEIGHT = 42;
 
@@ -91,11 +194,12 @@ function resizeCanvas(){
   canvas.width = Math.round(W*dpr);
   canvas.height = Math.round(H*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  isoLayout();
 }
 
 const state = {
   temp:32, humid:65, alt:2.5, ozone:true, inversion:false,
-  showClouds:false, cloudSel:'auto',
+  showClouds:false, cloudSel:'auto', showFormation:false, iso:false,
   showRadiation:false, radBook:true, realScale:false, aurora:true,
   showPlane:true, showBalloon:true, showWeather:true, showSat:true,
   activeLayer:null
@@ -285,12 +389,12 @@ function radBudget(){
 /* ============ NAVEGAÇÃO E PAINEL ============ */
 function buildNav(){
   $('modeNav').innerHTML =
-    '<button data-mode="estrutura" class="active">🏔️ Estrutura Vertical</button>'+
-    '<button data-mode="circulacao">🌐 Circulação Global</button>'+
-    '<button data-mode="fatores">🧭 Fatores Climáticos</button>'+
-    '<button data-mode="massas">🇧🇷 Massas de Ar</button>'+
-    '<button data-mode="climogramas">📊 Climogramas</button>'+
-    '<button data-mode="sintese">🧠 Síntese</button>';
+    '<button data-mode="estrutura" class="active"><svg class=ic><use href=#i-mountain-snow></use></svg> Estrutura Vertical</button>'+
+    '<button data-mode="circulacao"><svg class=ic><use href=#i-globe-grid></use></svg> Circulação Global</button>'+
+    '<button data-mode="fatores"><svg class=ic><use href=#i-compass></use></svg> Fatores Climáticos</button>'+
+    '<button data-mode="massas"><svg class=ic><use href=#i-map></use></svg> Massas de Ar</button>'+
+    '<button data-mode="climogramas"><svg class=ic><use href=#i-bar-chart></use></svg> Climogramas</button>'+
+    '<button data-mode="sintese"><svg class=ic><use href=#i-network></use></svg> Síntese</button>';
   document.querySelectorAll('#modeNav button').forEach(b=>{ b.onclick = () => setMode(b.dataset.mode); });
 }
 function setMode(id){
@@ -298,6 +402,7 @@ function setMode(id){
   document.querySelectorAll('#modeNav button').forEach(b=>b.classList.toggle('active', b.dataset.mode===id));
   $('zoomBadge').style.display = (id === 'estrutura') ? '' : 'none';
   buildPanel(); buildLegend();
+  isoApply();
 }
 
 function buildPanel(){
@@ -308,7 +413,7 @@ function buildPanel(){
     return;
   }
   p.innerHTML = `
-    <div class="card"><div class="card-title">🔍 Zoom & Navegação</div>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-search></use></svg> Zoom & Navegação</div>
       <div class="control-group">
         <div class="control-label"><span>Zoom:</span><span id="zoomVal" class="control-value">1.0×</span></div>
         <input type="range" id="zoomSlider" min="1" max="50" step="0.5" value="1">
@@ -317,11 +422,11 @@ function buildPanel(){
         <div class="control-label"><span>Centro:</span><span id="centerVal" class="control-value">21 km</span></div>
         <input type="range" id="centerSlider" min="0" max="1000" step="1" value="500" disabled>
       </div>
-      <button id="recenterBtn" class="full">📍 Recentralizar na Sondagem</button>
-      <div class="concept-box">🖱️ A <b>roda do mouse</b> aproxima o ponto sob o cursor (horizontal e vertical). <b>Arraste</b> para mover, <b>duplo clique</b> aproxima ×2. No toque, use a <b>pinça</b>.</div>
+      <button id="recenterBtn" class="full"><svg class=ic><use href=#i-map-pin></use></svg> Recentralizar na Sondagem</button>
+      <div class="concept-box"><svg class=ic><use href=#i-mouse-pointer></use></svg> A <b>roda do mouse</b> aproxima o ponto sob o cursor (horizontal e vertical). <b>Arraste</b> para mover, <b>duplo clique</b> aproxima ×2. No toque, use a <b>pinça</b>.</div>
     </div>
 
-    <div class="card"><div class="card-title">📚 Camadas da Atmosfera</div>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-layers></use></svg> Camadas da Atmosfera</div>
       <div class="layer-grid">
         <button class="layer-btn" data-layer="troposfera" style="color:#fb923c"><div class="layer-dot" style="background:#fb923c"></div>Troposfera</button>
         <button class="layer-btn" data-layer="estratosfera" style="color:#38bdf8"><div class="layer-dot" style="background:#38bdf8"></div>Estratosfera</button>
@@ -332,26 +437,28 @@ function buildPanel(){
       <div id="layerInfoBox" class="concept-box">Clique em uma camada para destacá-la.</div>
     </div>
 
-    <div class="card"><div class="card-title">🛰️ Objetos na Atmosfera</div>
-      <label class="toggle-switch"><span>✈️ Avião comercial (~10 km)</span>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-satellite></use></svg> Objetos na Atmosfera</div>
+      <label class="toggle-switch"><span><svg class=ic><use href=#i-plane></use></svg> Avião comercial (~10 km)</span>
         <span class="switch"><input type="checkbox" id="showPlane" checked><span class="slider-round"></span></span></label>
-      <label class="toggle-switch"><span>🎈 Balão de ar quente (~2 km)</span>
+      <label class="toggle-switch"><span><svg class=ic><use href=#i-balloon></use></svg> Balão de ar quente (~2 km)</span>
         <span class="switch"><input type="checkbox" id="showBalloon" checked><span class="slider-round"></span></span></label>
-      <label class="toggle-switch"><span>🎈 Balão meteorológico (~30 km)</span>
+      <label class="toggle-switch"><span><svg class=ic><use href=#i-balloon></use></svg> Balão meteorológico (~30 km)</span>
         <span class="switch"><input type="checkbox" id="showWeather" checked><span class="slider-round"></span></span></label>
-      <label class="toggle-switch"><span>🛰️ Satélite (~400 km)</span>
+      <label class="toggle-switch"><span><svg class=ic><use href=#i-satellite></use></svg> Satélite (~400 km)</span>
         <span class="switch"><input type="checkbox" id="showSat" checked><span class="slider-round"></span></span></label>
     </div>
 
-    <div class="card"><div class="card-title">🎨 Aparência</div>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-palette></use></svg> Aparência</div>
       <label class="toggle-switch"><span>Relevo em escala real (altura ≈ régua)</span>
         <span class="switch"><input type="checkbox" id="realScale"><span class="slider-round"></span></span></label>
-      <label class="toggle-switch"><span>🌌 Aurora (ionosfera)</span>
+      <label class="toggle-switch"><span><svg class=ic><use href=#i-aurora></use></svg> Aurora (ionosfera)</span>
         <span class="switch"><input type="checkbox" id="showAurora" checked><span class="slider-round"></span></span></label>
+      <label class="toggle-switch"><span><svg class=ic><use href=#i-box></use></svg> Visão isométrica (ângulo raso)</span>
+        <span class="switch"><input type="checkbox" id="isoView"><span class="slider-round"></span></span></label>
       <div class="concept-box">Por padrão a paisagem é <b>ilustrativa</b> (alturas exageradas para serem vistas). Com escala real, serra ≈ 1,5 km, prédios ≈ 200 m e árvores ≈ 40 m: aproxime bastante para vê-los.</div>
     </div>
 
-    <div class="card"><div class="card-title">🎛️ Condições</div>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-sliders></use></svg> Condições</div>
       ${range('tempSlider','Temperatura Superfície (°C)','tempVal',10,45,32,'°C')}
       ${range('humidSlider','Umidade Relativa (%)','humidVal',10,100,65,'%')}
       <div class="concept-box" id="humidReadout"></div>
@@ -365,7 +472,7 @@ function buildPanel(){
         <span class="switch"><input type="checkbox" id="inversionToggle"><span class="slider-round"></span></span></label>
     </div>
 
-    <div class="card"><div class="card-title">☀️ Radiação (Pág. 36)</div>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-sun></use></svg> Radiação (Pág. 36)</div>
       <label class="toggle-switch"><span>Mostrar radiação</span>
         <span class="switch"><input type="checkbox" id="showRadiation"><span class="slider-round"></span></span></label>
       <label class="toggle-switch"><span>Valores médios globais do livro (390 W/m² ≈ 15 °C)</span>
@@ -376,9 +483,11 @@ function buildPanel(){
       <div class="concept-box" id="radReadout">Ative para visualizar.</div>
     </div>
 
-    <div class="card"><div class="card-title">☁️ Nuvens (Pág. 35)</div>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-cloud></use></svg> Nuvens (Pág. 35)</div>
       <label class="toggle-switch"><span>Mostrar nuvens</span>
         <span class="switch"><input type="checkbox" id="showClouds"><span class="slider-round"></span></span></label>
+      <label class="toggle-switch"><span><svg class=ic><use href=#i-cloud-rain></use></svg> Animação: como a nuvem se forma</span>
+        <span class="switch"><input type="checkbox" id="showFormation"><span class="slider-round"></span></span></label>
       <select id="cloudSel">
         <option value="auto">Auto (umidade/temperatura)</option>
         <option value="all">Mostrar Todos (galeria)</option>
@@ -401,10 +510,11 @@ function buildPanel(){
           <option value="cumulonimbus">Cumulonimbus (tempestade)</option>
         </optgroup>
       </select>
+      <button class="full" id="cloudReplay" style="margin-top:6px"><svg class=ic><use href=#i-rotate-ccw></use></svg> Ver a formação novamente</button>
       <div class="concept-box" id="cloudReadout">Selecione e ative o overlay.</div>
     </div>
 
-    <div class="card"><div class="card-title">📊 Telemetria</div>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-bar-chart></use></svg> Telemetria</div>
       <table class="telemetry">
         <tr><td>Camada:</td><td id="tLayer">—</td></tr>
         <tr><td>Temperatura Local:</td><td id="tTemp">—</td></tr>
@@ -413,7 +523,7 @@ function buildPanel(){
       </table>
     </div>
 
-    <div class="card"><div class="card-title">📖 Conceito (Págs. 35–36)</div>
+    <div class="card"><div class="card-title"><svg class=ic><use href=#i-book-open></use></svg> Conceito (Págs. 35–36)</div>
       <div class="concept-box">5 camadas: <b>troposfera</b> (tempo), <b>estratosfera</b> (ozônio), <b>mesosfera</b> (mais fria), <b>termosfera</b> (ionosfera e auroras) e <b>exosfera</b> (quase sem ar). A atmosfera tem cerca de <b>800 km</b> de espessura.</div>
     </div>`;
   state.activeLayer = null;
@@ -426,9 +536,12 @@ function bindEstrutura(){
   ['tempSlider','humidSlider','altSlider','solarSlider','albedoSlider','ghSlider'].forEach(id=>{
     const el=$(id); if(el) el.oninput = ()=>{ readInputs(); updateReadouts(); };
   });
-  ['ozoneToggle','inversionToggle','showPlane','showBalloon','showWeather','showSat','showRadiation','radBook','showClouds','realScale','showAurora'].forEach(id=>{
+  ['ozoneToggle','inversionToggle','showPlane','showBalloon','showWeather','showSat','showRadiation','radBook','showClouds','showFormation','realScale','showAurora'].forEach(id=>{
     const el=$(id); if(el) el.onchange = ()=>{ readInputs(); updateReadouts(); };
   });
+  const sfm = $('showFormation'); if (sfm) sfm.addEventListener('change', ()=>{ FORM.t0 = performance.now(); });
+  const isoCb = $('isoView'); if (isoCb){ isoCb.checked = state.iso; isoCb.addEventListener('change', ()=>{ state.iso = isoCb.checked; isoApply(); }); }
+  const crp = $('cloudReplay'); if (crp) crp.onclick = ()=>{ CLOUDANIM.t0 = performance.now()/1000; };
   const cs = $('cloudSel'); if (cs) cs.onchange = ()=>{ readInputs(); updateReadouts(); };
   document.querySelectorAll('.layer-btn').forEach(b=>{
     b.onclick = ()=>{
@@ -462,6 +575,7 @@ function readInputs(){
   radState.albedo = num('albedoSlider', 31.3);
   radState.gh = num('ghSlider', 2);
   state.showClouds = c('showClouds');
+  state.showFormation = c('showFormation');
   state.cloudSel = g('cloudSel') || 'auto';
   state.showPlane = c('showPlane');
   state.showBalloon = c('showBalloon');
@@ -493,10 +607,10 @@ function buildLegend(){
     </div>
     <div class="legend-group"><span class="legend-group-title">Objetos</span>
       <div class="legend-items">
-        <div class="legend-item"><div class="legend-color" style="background:#e2e8f0"></div>✈️ 10 km</div>
-        <div class="legend-item"><div class="legend-color" style="background:#f87171"></div>🎈 2 km</div>
-        <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>🎈 30 km</div>
-        <div class="legend-item"><div class="legend-color" style="background:#c084fc"></div>🛰️ 400 km</div>
+        <div class="legend-item"><div class="legend-color" style="background:#e2e8f0"></div><svg class=ic><use href=#i-plane></use></svg> 10 km</div>
+        <div class="legend-item"><div class="legend-color" style="background:#f87171"></div><svg class=ic><use href=#i-balloon></use></svg> 2 km</div>
+        <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div><svg class=ic><use href=#i-balloon></use></svg> 30 km</div>
+        <div class="legend-item"><div class="legend-color" style="background:#c084fc"></div><svg class=ic><use href=#i-satellite></use></svg> 400 km</div>
       </div>
     </div>`;
 }
@@ -508,7 +622,7 @@ function syncZoomUI(){
   if ($('zoomVal')) $('zoomVal').innerText = view.zoom.toFixed(1) + '×';
   if ($('centerSlider')){ $('centerSlider').value = Math.round(view.centerU*1000); $('centerSlider').disabled = view.zoom<=1; }
   if ($('centerVal')) $('centerVal').innerText = fmtKm(kmFromU(view.centerU));
-  if ($('zoomBadge')) $('zoomBadge').innerText = '🔍 ' + view.zoom.toFixed(1) + '×';
+  if ($('zoomBadge')) $('zoomBadge').innerHTML = '<svg class=ic><use href=#i-search></use></svg> ' + view.zoom.toFixed(1) + '×';
 }
 
 /* ============ ZOOM 2D ANCORADO NO CURSOR ============ */
@@ -534,17 +648,17 @@ function zoomAt(mx, my, newZoom){
 canvas.addEventListener('wheel', (e)=>{
   e.preventDefault();
   if (currentMode !== 'estrutura') return;
-  const rect = canvas.getBoundingClientRect();
   let dy = e.deltaY;
   if (e.deltaMode === 1) dy *= 33; else if (e.deltaMode === 2) dy *= 300;
   dy = Math.max(-240, Math.min(240, dy));
-  zoomAt(e.clientX - rect.left, e.clientY - rect.top, view.zoom * Math.exp(-dy*0.0018));
+  const pw = cxy(e.clientX, e.clientY);
+  zoomAt(pw.x, pw.y, view.zoom * Math.exp(-dy*0.0018));
 }, { passive:false });
 
 canvas.addEventListener('dblclick', (e)=>{
   if (currentMode !== 'estrutura') return;
-  const rect = canvas.getBoundingClientRect();
-  zoomAt(e.clientX - rect.left, e.clientY - rect.top, view.zoom*2);
+  const pd = cxy(e.clientX, e.clientY);
+  zoomAt(pd.x, pd.y, view.zoom*2);
 });
 
 let dragging = false, dragStart = null;
@@ -562,14 +676,15 @@ function moveDrag(x, y){
 
 canvas.addEventListener('mousedown', (e)=>{
   if (currentMode !== 'estrutura'){ const r = canvas.getBoundingClientRect(); modHook('down', e.clientX - r.left, e.clientY - r.top); return; }
-  beginDrag(e.clientX, e.clientY); canvas.classList.add('dragging');
+  const pm = cxy(e.clientX, e.clientY); beginDrag(pm.x, pm.y); canvas.classList.add('dragging');
 });
 window.addEventListener('mousemove', (e)=>{
   const rect = canvas.getBoundingClientRect();
-  pointer.x = e.clientX - rect.left; pointer.y = e.clientY - rect.top;
+  const pp = cxy(e.clientX, e.clientY);
+  pointer.x = pp.x; pointer.y = pp.y;
   pointer.inside = pointer.x >= 0 && pointer.x <= rect.width && pointer.y >= 0 && pointer.y <= rect.height;
   if (currentMode !== 'estrutura'){ modHook('move', pointer.x, pointer.y); return; }
-  if (dragging) moveDrag(e.clientX, e.clientY);
+  if (dragging) moveDrag(pointer.x, pointer.y);
 });
 window.addEventListener('mouseup', ()=>{ if (currentMode !== 'estrutura'){ modHook('up', pointer.x, pointer.y); return; } dragging = false; canvas.classList.remove('dragging'); });
 canvas.addEventListener('mouseleave', ()=>{ pointer.inside = false; });
@@ -577,15 +692,14 @@ canvas.addEventListener('mouseleave', ()=>{ pointer.inside = false; });
 /* Toque: um dedo arrasta; dois dedos fazem pinça ancorada no ponto médio. */
 let pinch = null;
 function touchInfo(t){
-  const rect = canvas.getBoundingClientRect();
   const a = t[0], b = t[1];
-  return { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
-           x: (a.clientX + b.clientX)/2 - rect.left, y: (a.clientY + b.clientY)/2 - rect.top };
+  const m = cxy((a.clientX + b.clientX)/2, (a.clientY + b.clientY)/2);
+  return { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), x: m.x, y: m.y };
 }
 canvas.addEventListener('touchstart', (e)=>{
   if (currentMode !== 'estrutura'){ const r = canvas.getBoundingClientRect(); pointer.x = e.touches[0].clientX - r.left; pointer.y = e.touches[0].clientY - r.top; pointer.inside = true; modHook('down', pointer.x, pointer.y); return; }
   if (e.touches.length === 2){ dragging = false; pinch = touchInfo(e.touches); }
-  else if (e.touches.length === 1){ beginDrag(e.touches[0].clientX, e.touches[0].clientY); }
+  else if (e.touches.length === 1){ const pt = cxy(e.touches[0].clientX, e.touches[0].clientY); beginDrag(pt.x, pt.y); }
 }, { passive:true });
 canvas.addEventListener('touchmove', (e)=>{
   if (currentMode !== 'estrutura'){ const r = canvas.getBoundingClientRect(); pointer.x = e.touches[0].clientX - r.left; pointer.y = e.touches[0].clientY - r.top; modHook('move', pointer.x, pointer.y); return; }
@@ -594,7 +708,7 @@ canvas.addEventListener('touchmove', (e)=>{
     zoomAt(cur.x, cur.y, view.zoom * (cur.d / Math.max(1, pinch.d)));
     pinch = cur;
   } else if (dragging && e.touches.length === 1){
-    moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+    const pt = cxy(e.touches[0].clientX, e.touches[0].clientY); moveDrag(pt.x, pt.y);
   }
 }, { passive:true });
 canvas.addEventListener('touchend', (e)=>{ if (currentMode !== 'estrutura'){ modHook('up', pointer.x, pointer.y); return; } if (e.touches.length < 2) pinch = null; if (e.touches.length === 0) dragging = false; });
@@ -763,7 +877,7 @@ function drawAurora(usableH){
   }
   ctx.globalAlpha = 1;
   ctx.font = 'bold 9px Segoe UI'; ctx.fillStyle = 'rgba(134,239,172,0.9)';
-  ctx.fillText('✨ AURORA · ionosfera', W*0.58, yBot - hgt - 3);
+  ctx.fillText('{{i:sparkles}} AURORA · ionosfera', W*0.58, yBot - hgt - 3);
 }
 
 /* ============ NUVENS REALISTAS (10 gêneros) ============
@@ -802,14 +916,18 @@ const BLOBS_CB = [
   [-0.20,-2.00,0.60],[0.25,-1.95,0.62],[0,-2.20,0.55]
 ];
 
-function cloudCumulus(x, y, s){
+function cloudCumulus(x, y, s, gp){
+  gp = gp === undefined ? 1 : gp;                   // gp = progresso da formação (0 → 1)
   const baseY = y + s*0.42;
   ctx.save(); ctx.beginPath(); ctx.rect(x - s*4, y - s*5, s*8, baseY - (y - s*5)); ctx.clip();
   BLOBS_CU.forEach(b => {
     const hf = clamp((-b[1] + 0.3)/1.5, 0, 1);
-    puff(x + b[0]*s, y + b[1]*s, b[2]*s, mixC([214,224,238], WHITE, hf), mixC([118,136,166], [196,208,228], hf), 1);
+    const o = clamp((0.3 - b[1])/1.6, 0, 1);         // 0 = base, 1 = topo: cresce de baixo para cima
+    const bg = smooth01((gp - o*0.6)/0.4);
+    if (bg <= 0) return;
+    puff(x + b[0]*s*(0.55 + 0.45*bg), y + lerp(0.25, b[1], bg)*s, b[2]*s*bg, mixC([214,224,238], WHITE, hf), mixC([118,136,166], [196,208,228], hf), 1);
   });
-  softEllipse(x, baseY - s*0.05, s*1.7, s*0.2, [110,126,152], 0.4);
+  softEllipse(x, baseY - s*0.05, s*1.7*(0.3 + 0.7*smooth01(gp*1.5)), s*0.2, [110,126,152], 0.4*smooth01(gp*3));
   ctx.restore();
 }
 
@@ -832,17 +950,26 @@ function rainShaft(x, s, rainTop, groundY, halfW, dark){
   }
 }
 
-function cloudCb(x, y, s, groundY){
+function cloudCb(x, y, s, groundY, gp){
+  gp = gp === undefined ? 1 : gp;
+  const tw = smooth01(gp/0.7);                        // 1) torre sobe
   BLOBS_CB.forEach(b => {
     const hf = clamp((-b[1] + 0.6)/2.9, 0, 1);
-    puff(x + b[0]*s, y + b[1]*s, b[2]*s, mixC([120,134,158], WHITE, hf), mixC([52,62,80], [170,184,208], hf), 1);
+    const o = clamp((0.6 - b[1])/2.8, 0, 1);
+    const bg = smooth01((tw - o*0.7)/0.3);
+    if (bg <= 0) return;
+    puff(x + b[0]*s*(0.5 + 0.5*bg), lerp(y + 0.7*s, y + b[1]*s, bg), b[2]*s*bg, mixC([120,134,158], WHITE, hf), mixC([52,62,80], [170,184,208], hf), 1);
   });
-  softEllipse(x + s*0.2, y - s*2.35, s*2.5, s*0.30, [248,250,255], 0.92);
-  softEllipse(x - s*0.3, y - s*2.15, s*2.0, s*0.22, [225,232,244], 0.80);
-  softEllipse(x, y + s*1.25, s*2.1, s*0.30, [38,46,60], 0.65);
-  rainShaft(x, s, y + s*1.3, groundY, s*1.4, true);
+  const an = smooth01((gp - 0.58)/0.25);              // 2) topo se achata em bigorna (cristais de gelo)
+  if (an > 0){
+    softEllipse(x + s*0.2*an, y - s*2.35, s*2.5*an, s*0.30*(0.4 + 0.6*an), [248,250,255], 0.92*an);
+    softEllipse(x - s*0.3*an, y - s*2.15, s*2.0*an, s*0.22*(0.4 + 0.6*an), [225,232,244], 0.80*an);
+  }
+  softEllipse(x, y + s*1.25, s*2.1, s*0.30, [38,46,60], 0.65*smooth01(gp/0.4));
+  const rn = smooth01((gp - 0.78)/0.17);              // 3) chuva e raios
+  if (rn > 0){ ctx.save(); ctx.globalAlpha = rn; rainShaft(x, s, y + s*1.3, groundY, s*1.4, true); ctx.restore(); }
   const ph = (time*1.3) % 3;
-  if (ph < 0.28){
+  if (gp > 0.9 && ph < 0.28){
     ctx.strokeStyle = 'rgba(255,244,170,0.95)'; ctx.lineWidth = Math.max(1.4, s*0.05);
     ctx.beginPath();
     ctx.moveTo(x - s*0.1, y + s*0.4); ctx.lineTo(x + s*0.18, y + s*0.85);
@@ -852,88 +979,162 @@ function cloudCb(x, y, s, groundY){
   }
 }
 
-function cloudNimbo(x, y, s, groundY){
+function cloudNimbo(x, y, s, groundY, gp){
+  gp = gp === undefined ? 1 : gp;
+  const e = smooth01(gp/0.65), dk = smooth01(gp/0.75);   // camada se espalha e escurece
+  const c1 = mixC([176,186,200], [88,100,120], dk);
   for (let k=0; k<7; k++)
-    softEllipse(x + (k-3)*0.75*s, y + ((k%2) ? 0.05 : -0.08)*s, 1.3*s, 0.55*s, [88,100,120], 0.78);
-  softEllipse(x + 0.3*s, y - 0.25*s, 2.2*s, 0.35*s, [120,132,150], 0.5);
-  softEllipse(x, y + 0.28*s, 2.7*s, 0.4*s, [52,63,80], 0.6);
-  rainShaft(x, s, y + 0.45*s, groundY, s*1.9, false);
+    softEllipse(x + (k-3)*0.75*s*e, y + ((k%2) ? 0.05 : -0.08)*s, 1.3*s*(0.45 + 0.55*e), 0.55*s*(0.5 + 0.5*e), c1, 0.78*e);
+  softEllipse(x + 0.3*s, y - 0.25*s, 2.2*s*e, 0.35*s, mixC([190,198,210], [120,132,150], dk), 0.5*e);
+  softEllipse(x, y + 0.28*s, 2.7*s*e, 0.4*s, mixC([150,160,175], [52,63,80], dk), 0.6*dk);
+  const rn = smooth01((gp - 0.72)/0.2);
+  if (rn > 0){ ctx.save(); ctx.globalAlpha = rn; rainShaft(x, s, y + 0.45*s, groundY, s*1.9, false); ctx.restore(); }
 }
 
-function cloudStratus(x, y, s){
+function cloudStratus(x, y, s, gp){
+  gp = gp === undefined ? 1 : gp;
+  const e = smooth01(gp);                              // camada uniforme que se espalha
   for (let k=0; k<6; k++)
-    softEllipse(x + (k-2.5)*0.9*s, y + (hash1(k*3.3)-0.5)*0.12*s, 1.5*s, 0.30*s, [190,200,214], 0.58);
-  softEllipse(x, y + 0.12*s, 3.0*s, 0.22*s, [140,152,170], 0.4);
+    softEllipse(x + (k-2.5)*0.9*s*(0.35 + 0.65*e), y + (hash1(k*3.3)-0.5)*0.12*s, 1.5*s*(0.5 + 0.5*e), 0.30*s*(0.4 + 0.6*e), [190,200,214], 0.58*e);
+  softEllipse(x, y + 0.12*s, 3.0*s*e, 0.22*s, [140,152,170], 0.4*e);
 }
 
-function cloudStratocumulus(x, y, s){
+function cloudStratocumulus(x, y, s, gp){
+  gp = gp === undefined ? 1 : gp;
   for (let c=-1; c<=1; c++){
     for (let k=0; k<5; k++){
-      const r = 0.5*s*(0.8 + 0.25*hash1(c*7 + k*2.3));
+      const pg = smooth01((gp - (((c+1)*5 + k)/15)*0.55)/0.45);
+      const r = 0.5*s*(0.8 + 0.25*hash1(c*7 + k*2.3))*pg;
       puff(x + c*1.9*s + (k-2)*0.5*s, y + ((k%2) ? -0.06 : 0.03)*s, r, [238,242,250], [125,138,160], 0.96, 0.7);
     }
-    softEllipse(x + c*1.9*s, y + 0.22*s, 1.5*s, 0.16*s, [120,134,156], 0.35);
+    softEllipse(x + c*1.9*s, y + 0.22*s, 1.5*s, 0.16*s, [120,134,156], 0.35*smooth01(gp/0.6));
   }
 }
 
-function cloudAltocumulus(x, y, s){
+function cloudAltocumulus(x, y, s, gp){
+  gp = gp === undefined ? 1 : gp;
   for (let r=0; r<2; r++){
     for (let k=0; k<7; k++){
-      const rr = 0.22*s*(0.85 + 0.3*hash1(r*9 + k*1.7));
+      const pg = smooth01((gp - hash1((r*7 + k)*1.9)*0.6)/0.4);   // flocos surgem em pontos diferentes
+      const rr = 0.22*s*(0.85 + 0.3*hash1(r*9 + k*1.7))*pg;
       puff(x + (k-3)*0.36*s + r*0.18*s, y + r*0.24*s + Math.sin(k*1.3)*0.05*s, rr, WHITE, [150,165,190], 0.96, 0.75);
     }
   }
 }
 
-function cloudAltostratus(x, y, s){
-  for (let k=0; k<5; k++) softEllipse(x + (k-2)*0.9*s, y, 1.4*s, 0.42*s, [152,165,186], 0.6);
-  softEllipse(x + 0.6*s, y - 0.12*s, 1.5*s, 0.3*s, [226,233,243], 0.35);
+function cloudAltostratus(x, y, s, gp){
+  gp = gp === undefined ? 1 : gp;
+  const e = smooth01(gp);
+  for (let k=0; k<5; k++) softEllipse(x + (k-2)*0.9*s*e, y, 1.4*s*(0.4 + 0.6*e), 0.42*s*(0.5 + 0.5*e), [152,165,186], 0.6*e);
+  softEllipse(x + 0.6*s*e, y - 0.12*s, 1.5*s*e, 0.3*s, [226,233,243], 0.35*e);
 }
 
-function cloudCirrus(x, y, s){
+/* Cirrus (uncinus): cabeça com gancho + feixe de fibras finas que se abrem em leque,
+   esticam-se pelo cisalhamento do vento e se desfazem na cauda (cristais de gelo).
+   gp = progresso da formação: as fibras são "desenhadas" da cabeça para a cauda. */
+function cirrusStreak(hx, hy, len, seed, alpha, gp){
+  gp = gp === undefined ? 1 : gp;
+  if (gp <= 0) return;
+  const gL = smooth01(gp);
+  const ang = 0.30 + 0.16*(hash1(seed*1.7) - 0.5);
+  const dx = Math.cos(ang), dy = Math.sin(ang), px = -dy, py = dx;
+  const sway = Math.sin(time*0.22 + seed*2.1)*len*0.025;
+  const NF = 15;
+  for (let j=0; j<NF; j++){
+    const t = (j/(NF-1))*2 - 1;
+    const r1 = hash1(seed*9.1 + j*3.7), r2 = hash1(seed*5.3 + j*7.9);
+    const L = len*(0.55 + 0.45*r1)*gL;
+    const w0 = t*len*0.030;
+    const w1 = (t*len*(0.10 + 0.07*r2) + sway)*gL;
+    const drop = len*(0.10 + 0.20*r2)*gL;
+    const x0 = hx + px*w0, y0 = hy + py*w0;
+    const x3 = hx + dx*L + px*w1, y3 = hy + dy*L + py*w1 + drop;
+    const c1x = x0 + dx*L*0.28, c1y = y0 + dy*L*0.28 - len*0.012;
+    const c2x = x0 + dx*L*0.66 + px*w1*0.35, c2y = y0 + dy*L*0.66 + py*w1*0.35 + drop*0.25;
+    const a0 = alpha*(0.30 + 0.45*hash1(seed*2.9 + j*1.3))*(1 - Math.abs(t)*0.45)*Math.min(1, gp*2.5);
+    const g = ctx.createLinearGradient(x0, y0, x3, y3);
+    g.addColorStop(0,   'rgba(255,255,255,' + (a0).toFixed(3) + ')');
+    g.addColorStop(0.35,'rgba(255,255,255,' + (a0*0.85).toFixed(3) + ')');
+    g.addColorStop(1,   'rgba(232,240,252,0)');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = Math.max(0.6, len*0.012*(1.3 - 0.8*r1));
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.bezierCurveTo(c1x, c1y, c2x, c2y, x3, y3); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,' + (alpha*0.55*clamp(gp*3, 0, 1)).toFixed(3) + ')';
+  ctx.lineWidth = Math.max(0.8, len*0.011);
+  ctx.beginPath();
+  ctx.moveTo(hx - dx*len*0.05, hy - dy*len*0.05 + len*0.05);
+  ctx.quadraticCurveTo(hx - dx*len*0.085, hy - len*0.05, hx + dx*len*0.06, hy - len*0.035);
+  ctx.quadraticCurveTo(hx + dx*len*0.16, hy - len*0.02, hx + dx*len*0.26, hy + dy*len*0.22);
+  ctx.stroke();
+  ctx.save(); ctx.translate(hx + dx*len*0.45, hy + dy*len*0.45 + len*0.05); ctx.rotate(ang*0.9);
+  softEllipse(0, 0, len*0.55*gL, len*0.10, [236,244,255], alpha*0.20*gL);
+  ctx.restore();
+}
+
+function cloudCirrus(x, y, s, gp){
+  gp = gp === undefined ? 1 : gp;
   ctx.save(); ctx.lineCap = 'round';
-  for (let k=0; k<7; k++){
-    const oy = (k-3)*0.13*s + (hash1(k*3.1)-0.5)*0.1*s;
-    const len = (1.0 + hash1(k*5.3)*1.4)*s;
-    const ox = (hash1(k*7.9)-0.5)*1.4*s;
-    ctx.strokeStyle = 'rgba(255,255,255,' + (0.35 + 0.35*hash1(k*2.7)).toFixed(2) + ')';
-    ctx.lineWidth = Math.max(0.8, s*0.045*(1.4 - hash1(k*4.1)*0.8));
-    ctx.beginPath(); ctx.moveTo(x + ox - len, y + oy + len*0.06);
-    ctx.bezierCurveTo(x + ox - len*0.3, y + oy - len*0.16, x + ox + len*0.35, y + oy - len*0.12, x + ox + len, y + oy + len*0.14);
-    ctx.stroke();
+  const N = 4;
+  for (let k=0; k<N; k++){
+    const len = s*(2.0 + 1.5*hash1(k*5.3 + 1.1));
+    const hx = x + (k - (N-1)/2)*s*1.05 + (hash1(k*7.9) - 0.5)*s*0.5 - len*0.35;
+    const hy = y + (k - (N-1)/2)*s*0.17 + (hash1(k*3.1) - 0.5)*s*0.16;
+    cirrusStreak(hx, hy, len, k + 1, 0.80 - 0.10*k, clamp((gp - k*0.14)/0.58, 0, 1));
   }
   ctx.restore();
 }
 
-function cloudCirrocumulus(x, y, s){
+function cloudCirrocumulus(x, y, s, gp){
+  gp = gp === undefined ? 1 : gp;
   for (let r=0; r<3; r++)
-    for (let k=0; k<9; k++)
-      puff(x + (k-4)*0.3*s + (r%2)*0.15*s, y + (r-1)*0.2*s, 0.11*s*(0.8 + 0.4*hash1(r*5 + k)), WHITE, [190,205,230], 0.92);
+    for (let k=0; k<9; k++){
+      const pg = smooth01((gp - hash1(r*13 + k*3)*0.6)/0.4);      // flocos surgem aos poucos
+      puff(x + (k-4)*0.3*s + (r%2)*0.15*s, y + (r-1)*0.2*s, 0.11*s*(0.8 + 0.4*hash1(r*5 + k))*pg, WHITE, [190,205,230], 0.92);
+    }
 }
 
-function cloudCirrostratus(x, y, s){
-  softEllipse(x, y, 2.6*s, 0.5*s, [240,246,252], 0.42);
-  softEllipse(x + 0.4*s, y + 0.05*s, 3.2*s, 0.3*s, [246,250,255], 0.28);
-  ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 0.8;
+function cloudCirrostratus(x, y, s, gp){
+  gp = gp === undefined ? 1 : gp;
+  const e = smooth01(gp);                                          // véu que se espalha e engrossa
+  softEllipse(x, y, 2.6*s*(0.3 + 0.7*e), 0.5*s*(0.5 + 0.5*e), [240,246,252], 0.42*e);
+  softEllipse(x + 0.4*s*e, y + 0.05*s, 3.2*s*e, 0.3*s, [246,250,255], 0.28*e);
+  ctx.strokeStyle = 'rgba(255,255,255,' + (0.22*e).toFixed(3) + ')'; ctx.lineWidth = 0.8;
   for (let i=0; i<6; i++){
     const off = (i-3)*0.11*s;
-    ctx.beginPath(); ctx.moveTo(x - 2.4*s, y + off); ctx.quadraticCurveTo(x, y + off - 0.05*s, x + 2.4*s, y + off); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - 2.4*s*e, y + off); ctx.quadraticCurveTo(x, y + off - 0.05*s, x + 2.4*s*e, y + off); ctx.stroke();
   }
 }
 
-function drawCloud(x, y, s, tipo, groundY){
+function drawCloud(x, y, s, tipo, groundY, gp){
   switch (tipo){
-    case 'cirrus': cloudCirrus(x, y, s); break;
-    case 'cirrocumulus': cloudCirrocumulus(x, y, s); break;
-    case 'cirrostratus': cloudCirrostratus(x, y, s); break;
-    case 'altocumulus': cloudAltocumulus(x, y, s); break;
-    case 'altostratus': cloudAltostratus(x, y, s); break;
-    case 'stratocumulus': cloudStratocumulus(x, y, s); break;
-    case 'stratus': cloudStratus(x, y, s); break;
-    case 'nimbostratus': cloudNimbo(x, y, s, groundY); break;
-    case 'cumulonimbus': cloudCb(x, y, s, groundY); break;
-    default: cloudCumulus(x, y, s);
+    case 'cirrus': cloudCirrus(x, y, s, gp); break;
+    case 'cirrocumulus': cloudCirrocumulus(x, y, s, gp); break;
+    case 'cirrostratus': cloudCirrostratus(x, y, s, gp); break;
+    case 'altocumulus': cloudAltocumulus(x, y, s, gp); break;
+    case 'altostratus': cloudAltostratus(x, y, s, gp); break;
+    case 'stratocumulus': cloudStratocumulus(x, y, s, gp); break;
+    case 'stratus': cloudStratus(x, y, s, gp); break;
+    case 'nimbostratus': cloudNimbo(x, y, s, groundY, gp); break;
+    case 'cumulonimbus': cloudCb(x, y, s, groundY, gp); break;
+    default: cloudCumulus(x, y, s, gp);
   }
+}
+
+/* Animação de formação: reinicia ao ligar as nuvens, ao trocar o tipo ou no botão "Ver formação". */
+const CLOUDANIM = { key:'', t0:0 };
+const CLOUD_DUR = { cirrus:5.5, cirrocumulus:5, cirrostratus:6, altocumulus:5, altostratus:6,
+                    stratocumulus:6, stratus:6, nimbostratus:8, cumulus:6, cumulonimbus:9 };
+function drawUpdraft(x, yBase, yGround, a){               // bolhas de ar úmido subindo até a base da nuvem
+  if (a <= 0.02 || yGround - yBase < 10) return;
+  const top = Math.max(yBase, -20), bot = Math.min(yGround, H + 20), step = 16, off = (performance.now()*0.04) % step;
+  ctx.save();
+  for (let yy = bot - off; yy > top; yy -= step){
+    const fr = (yGround - yy)/Math.max(1, yGround - yBase);
+    ctx.fillStyle = 'rgba(200,232,255,' + (a*(0.35 + 0.5*fr)).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(x + Math.sin(yy*0.05 + performance.now()*0.002)*4, yy, 1.4 + 1.3*fr, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
 }
 
 /* ============ RELEVO ============ */
@@ -1111,14 +1312,17 @@ function drawLandscape(usableH, ySurf, ls){
   let g;
 
   // L0: cordilheira distante (azulada, com neblina)
+  slot(-0.46, () => {
   ctx.beginPath(); ctx.moveTo(0, base);
   for (let i=0; i<n; i++) ctx.lineTo(sxA[i], ySurf - farA[i]);
   ctx.lineTo(W, base); ctx.closePath();
   g = ctx.createLinearGradient(0, ySurf - ls.mount*0.75, 0, ySurf);
   g.addColorStop(0, rgbS(mixC([138,156,186], HAZE, 0.45))); g.addColorStop(1, rgbS(mixC([128,148,178], HAZE, 0.8)));
   ctx.fillStyle = g; ctx.fill();
+  });
 
   // L1: serra — faces iluminadas pelo sol (direita) e em sombra (esquerda), com transição suavizada
+  slot(-0.30, () => {
   const K = 7;
   let litA = new Float32Array(n);
   for (let i=0; i<n; i++){
@@ -1211,8 +1415,10 @@ function drawLandscape(usableH, ySurf, ls){
   ctx.fillStyle = g; ctx.fill();
   const edgeMt = fx => Math.min(mountH(fx, ls, oct) + hillH(fx, ls, oct), treeLimit(fx, ls, oct));
   drawTreeRow(edgeMt, fx => envW(fx, 0.37, 0.63, 0.12) > 0.06 ? 0.9 : 0, 21, 0.85, 0.16, 0.05, 0.75, ySurf, ls);
+  });
 
   // L2: colinas em primeiro plano — fileira de árvores ao fundo, colina, fileira à frente
+  slot(0.18, () => {
   const dFront = fx => lerp(0.22, 0.95, envW(fx, 0.03, 0.34, 0.08))*(1 - cityEnv(fx));
   const edgeHill = fx => hillH(fx, ls, oct);
   drawTreeRow(edgeHill, dFront, 11, 0.8, 0.10, 0.32, 0.6, ySurf, ls);
@@ -1233,8 +1439,9 @@ function drawLandscape(usableH, ySurf, ls){
     ctx.lineTo(sxFromWorld(0.34), base); ctx.closePath(); ctx.fill();
   }
   drawTreeRow(edgeHill, dFront, 31, 1.0, 0.0, 0.05, 0.6, ySurf, ls);
+  });
 
-  drawCity(ySurf, ls);
+  slot(-0.12, () => drawCity(ySurf, ls));
 }
 
 /* ---------- solo em corte (camadas, pedregulhos, grama) e rótulos ---------- */
@@ -1267,9 +1474,9 @@ function drawGround(usableH, ySurf, ls){
   if (labelY > 8 && labelY < usableH){
     ctx.font = 'bold 9px Segoe UI'; ctx.textAlign = 'center';
     const real = state.realScale;
-    [['🌲 FLORESTA' + (real ? ' (~40 m)' : ''), 0.18, 'rgba(134,239,172,.9)'],
-     ['⛰️ SERRA' + (real ? ' (~1,5 km)' : ''), 0.50, 'rgba(226,232,240,.9)'],
-     ['🏙️ CIDADE' + (real ? ' (~200 m)' : ''), 0.84, 'rgba(226,232,240,.9)']].forEach(l => {
+    [['{{i:tree}} FLORESTA' + (real ? ' (~40 m)' : ''), 0.18, 'rgba(134,239,172,.9)'],
+     ['{{i:mountain}} SERRA' + (real ? ' (~1,5 km)' : ''), 0.50, 'rgba(226,232,240,.9)'],
+     ['{{i:building}} CIDADE' + (real ? ' (~200 m)' : ''), 0.84, 'rgba(226,232,240,.9)']].forEach(l => {
       const sx = sxFromWorld(l[1]);
       if (sx > 60 && sx < W - 60){ ctx.fillStyle = l[2]; ctx.fillText(l[0], sx, labelY); }
     });
@@ -1295,7 +1502,7 @@ function drawSmog(usableH, ySurf, ls){
     ctx.beginPath(); ctx.moveTo(RULER_WIDTH, top); ctx.lineTo(W, top); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = '#fde047'; ctx.font = 'bold 10px Segoe UI';
     ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 3;
-    ctx.fillText('🔥 INVERSÃO TÉRMICA · a temperatura sobe com a altitude e a poluição fica presa', W*0.36, top - 5);
+    ctx.fillText('{{i:flame}} INVERSÃO TÉRMICA · a temperatura sobe com a altitude e a poluição fica presa', W*0.36, top - 5);
     ctx.shadowBlur = 0;
   }
 }
@@ -1338,7 +1545,135 @@ function glow(x, y, rgb){
 const RULER_X = 26;
 const RULER_WIDTH = 52;
 
+/* ============ ANIMAÇÃO: COMO UMA NUVEM SE FORMA ============
+   Esquema em painel próprio (independe do zoom). Usa Temperatura e Umidade dos controles:
+   base da nuvem ≈ 125 m × (T − Td), com Td ≈ T − (100 − UR)/5  (aproximação didática). */
+const FORM = { t0: 0 };
+function drawCloudFormation(px, py, pw, ph){
+  const T0 = state.temp, RH0 = state.humid;
+  const lcl = clamp(0.025*(100 - RH0), 0.25, 2.3);          // km
+  const Td = T0 - (100 - RH0)/5;
+  const Hmax = clamp(lcl + 1.9, 3.2, 4.3);
+  const tHeat = 3, tRise = 5.5, tCond = 2, tGrow = 5, CYC = 18;
+  const t = ((performance.now() - FORM.t0)/1000) % CYC;
+  const t2 = tHeat + tRise, t3 = t2 + tCond, t4 = t3 + tGrow;
+  const fade = 1 - smooth01((t - (CYC - 1))/1);
+  const fmt1 = v => v.toFixed(1).replace('.', ',');
+
+  // moldura
+  ctx.save();
+  ctx.fillStyle = 'rgba(15,23,42,.93)'; ctx.fillRect(px, py, pw, ph);
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5; ctx.strokeRect(px + 0.5, py + 0.5, pw - 1, ph - 1);
+  drawLabel('Como uma nuvem se forma (convecção)', px + 12, py + 19, { size: 12, color:'#7dd3fc' });
+  const phase = t < tHeat ? 0 : (t < t2 ? 1 : (t < t3 ? 2 : 3));
+  const caps = [
+    '① O Sol aquece o solo e o ar junto dele fica quente e leve.',
+    '② O ar quente e úmido sobe, se expande e esfria (≈ 10 °C a cada km). A umidade relativa aumenta.',
+    '③ Quando a umidade relativa chega a 100 % (ponto de orvalho), o vapor condensa em gotículas.',
+    '④ O ar segue subindo e condensando: a nuvem cresce. Assim se forma um cumulus.'
+  ];
+  wrapText(caps[phase], px + 12, py + 38, pw - 24, 14, { size: 11, color:'#e2e8f0' });
+
+  // cena
+  const sx0 = px + 44, sx1 = px + pw - 12, sTop = py + 62, gY = py + ph - 44;
+  const kmY = km => gY - km/Hmax*(gY - sTop - 6);
+  const sky = ctx.createLinearGradient(0, sTop, 0, gY);
+  sky.addColorStop(0, 'rgb(64,120,190)'); sky.addColorStop(1, 'rgb(176,210,238)');
+  ctx.fillStyle = sky; ctx.fillRect(sx0, sTop, sx1 - sx0, gY - sTop);
+  // sol
+  const sunX = sx1 - 34, sunY = sTop + 28;
+  const sg = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, 34);
+  sg.addColorStop(0, 'rgba(255,240,150,.95)'); sg.addColorStop(1, 'rgba(255,240,150,0)');
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sunX, sunY, 34, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(sunX, sunY, 11, 0, Math.PI*2); ctx.fill();
+  // solo (esquenta no passo 1)
+  const heat = phase === 0 ? smooth01(t/1.5) : (phase === 1 ? 1 - 0.35*smooth01((t - tHeat)/tRise) : 0.5);
+  ctx.fillStyle = rgbaS(mixC([86,120,60], [196,120,60], heat*0.85), 1);
+  ctx.fillRect(sx0, gY, sx1 - sx0, 14);
+  // eixo de altitude
+  ctx.fillStyle = '#94a3b8'; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1;
+  for (let k=0; k<=Math.floor(Hmax); k++){
+    const y = kmY(k); ctx.beginPath(); ctx.moveTo(sx0 - 4, y); ctx.lineTo(sx0, y); ctx.stroke();
+    drawLabel(k + ' km', sx0 - 7, y + 3, { size: 9.5, color:'#94a3b8', align:'right', bold:false });
+  }
+
+  const cx = sx0 + (sx1 - sx0)*0.40;
+  // ondas de calor
+  const hw = phase === 0 ? heat : (phase === 1 ? 0.6 : 0);
+  if (hw > 0.02){
+    ctx.strokeStyle = 'rgba(255,170,90,' + (0.55*hw).toFixed(2) + ')'; ctx.lineWidth = 2;
+    for (let i=-2; i<=2; i++){
+      ctx.beginPath();
+      for (let yy = gY - 2; yy > gY - 44; yy -= 3){
+        const xx = cx + i*20 + Math.sin(yy*0.16 - performance.now()*0.004 + i)*3.5;
+        if (yy === gY - 2) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+      }
+      ctx.stroke();
+    }
+  }
+  // nível de condensação
+  const yL = kmY(lcl);
+  if (t > tHeat + 0.8){
+    const a = smooth01((t - tHeat - 0.8)/1.2)*fade;
+    ctx.save(); ctx.globalAlpha = a; ctx.setLineDash([6,4]); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(sx0, yL); ctx.lineTo(sx1, yL); ctx.stroke(); ctx.setLineDash([]);
+    drawLabel('Base da nuvem ≈ ' + fmt1(lcl) + ' km · UR = 100 %', sx1 - 8, yL + 14, { size: 10, color:'#fef08a', align:'right', bg:'rgba(15,23,42,.6)', pad:4 });
+    ctx.restore();
+  }
+  // bolha de ar / gotículas
+  const u = smooth01((t - tHeat)/tRise);
+  const g = smooth01((t - t3)/tGrow);
+  const hPar = t < tHeat ? 0 : (t < t3 ? lcl*u : lcl + 0.6*g);
+  const cond = smooth01((t - t2)/tCond);
+  const yP = kmY(hPar), rP = 13 + 9*hPar;
+  const parAlpha = (1 - clamp(g*1.5, 0, 1))*fade;
+  if (parAlpha > 0.02){
+    ctx.save(); ctx.globalAlpha = parAlpha;
+    const col = mixC([255,176,110], [205,224,250], clamp(hPar/lcl, 0, 1));
+    const bg = ctx.createRadialGradient(cx, yP, 2, cx, yP, rP);
+    bg.addColorStop(0, rgbaS(col, 0.55)); bg.addColorStop(1, rgbaS(col, 0.18));
+    ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(cx, yP, rP, 0, Math.PI*2); ctx.fill();
+    ctx.setLineDash([4,3]); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.setLineDash([]);
+    const dotCol = mixC([14,116,200], [255,255,255], cond);
+    for (let i=0; i<18; i++){
+      const ang = hash1(i*2.3)*Math.PI*2, rr = Math.sqrt(hash1(i*4.1 + 1))*(rP - 4);
+      const jx = Math.sin(performance.now()*0.003 + i*1.7)*2.2, jy = Math.cos(performance.now()*0.0035 + i*2.3)*2.2;
+      ctx.fillStyle = rgbaS(dotCol, 0.95);
+      ctx.beginPath(); ctx.arc(cx + Math.cos(ang)*rr + jx, yP + Math.sin(ang)*rr + jy, 1.6 + 1.7*cond, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    if (phase === 1) arrowLine(cx, yP - rP - 4, cx, yP - rP - 24, '#fde68a', 2.2, 6);
+    // leitura ao vivo
+    const hh = Math.min(hPar, lcl);
+    const Tp = T0 - 9.8*hh, RHp = RH0 + (100 - RH0)*hh/lcl;
+    if (phase < 3){
+      const lx = cx + rP + 12, ly = clamp(yP, sTop + 26, gY - 10);
+      drawLabel('Ar: ' + Tp.toFixed(0) + ' °C', lx, ly - 2, { size: 10.5, color:'#fff', bg:'rgba(15,23,42,.75)', pad:4 });
+      drawLabel('UR: ' + Math.round(RHp) + ' %', lx, ly + 13, { size: 10.5, color:'#fde68a', bg:'rgba(15,23,42,.75)', pad:4 });
+    }
+  }
+  // nuvem que cresce
+  if (g > 0){
+    const sc = 8 + 30*g, yc = yL - 0.42*sc;
+    ctx.save(); ctx.globalAlpha = clamp(g*4, 0, 1)*fade;
+    cloudCumulus(cx, yc, sc);
+    ctx.restore();
+    if (g > 0.6){
+      drawLabel('Nuvem = gotículas de água suspensas', cx + sc*2.2, yL - sc*0.9, { size: 10.5, color:'#fff', bg:'rgba(15,23,42,.7)', pad:4 });
+    }
+  }
+  // rodapé: valores dos controles + indicador de etapas
+  ctx.globalAlpha = 1;
+  drawLabel('Ponto de orvalho ≈ ' + Td.toFixed(0) + ' °C · base ≈ ' + fmt1(lcl) + ' km (varia com Temperatura e Umidade)', px + 12, py + ph - 16, { size: 9.5, color:'#94a3b8', bold:false });
+  for (let i=0; i<4; i++){
+    ctx.fillStyle = i === phase ? '#38bdf8' : 'rgba(148,163,184,.4)';
+    ctx.beginPath(); ctx.arc(px + pw - 62 + i*16, py + ph - 20, i === phase ? 5 : 3.5, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawEstrutura(){
+  if (ISO.on) ISO.q.length = 0;
   const w = W, h = H;
   const usableH = h - LEGEND_HEIGHT;
   const ySurf = yFromKm(0);
@@ -1348,6 +1683,7 @@ function drawEstrutura(){
   const ls = landScale(usableH);
 
   // 1. Céu (gradiente por altitude: horizonte claro → azul profundo → espaço)
+  slot(-0.5, () => {
   const grad = ctx.createLinearGradient(0, 0, 0, usableH);
   const NG = 40;
   for (let i=0; i<=NG; i++){
@@ -1356,13 +1692,17 @@ function drawEstrutura(){
   }
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, usableH);
+  });
 
   // 2. Estrelas (aparecem onde o céu escurece), sol e aurora
+  slot(-0.5, () => {
   drawStars(usableH, uAtY);
   drawSun(w - 110, 90);
   drawAurora(usableH);
+  });
 
   // 3. Buffer da camada ativa
+  slot(-0.5, () => {
   if (state.activeLayer){
     const L = LAYERS[state.activeLayer];
     const top = Math.min(yFromKm(L.kmTop), yFromKm(L.kmBot));
@@ -1385,8 +1725,10 @@ function drawEstrutura(){
       }
     }
   }
+  });
 
   // 4. Linhas das camadas
+  slot(-0.5, () => {
   const drawLine = (km, label, xLabel) => {
     const y = yFromKm(km);
     if (y < 0 || y > usableH) return;
@@ -1402,8 +1744,10 @@ function drawEstrutura(){
   drawLine(50, 'ESTRATOPAUSA · 50 km');
   drawLine(80, 'MESOPAUSA · 80 km');
   drawLine(600, 'LIMITE TERMOSFERA / EXOSFERA · ~600 km (varia)', w*0.42);
+  });
 
   // 5. Nomes verticais das camadas
+  slot(-0.5, () => {
   const layerNames = [
     { km:6,   name:'TROPOSFERA',   color:'rgba(251,146,60,.85)' },
     { km:31,  name:'ESTRATOSFERA', color:'rgba(56,189,248,.8)' },
@@ -1425,8 +1769,10 @@ function drawEstrutura(){
       ctx.restore();
     }
   });
+  });
 
   // 6. Ozônio
+  slot(-0.5, () => {
   if (state.ozone){
     const y1 = yFromKm(35), y2 = yFromKm(20);
     if (y2 > 0 && y1 < usableH){
@@ -1438,11 +1784,13 @@ function drawEstrutura(){
       ctx.fillStyle = oz;
       ctx.fillRect(0, t0, w, t1 - t0);
       ctx.fillStyle = '#93c5fd'; ctx.font = 'bold 11px Segoe UI';
-      ctx.fillText('🛡️ CAMADA DE OZÔNIO', w - 155, (t0+t1)/2 + 4);
+      ctx.fillText('{{i:shield}} CAMADA DE OZÔNIO', w - 155, (t0+t1)/2 + 4);
     }
   }
+  });
 
   // 7. Radiação — fluxos proporcionais ao balanço de calor do livro (pág. 36)
+  slot(0, () => {
   if (state.showRadiation){
     const R = radBudget();
     const rd = Math.round;
@@ -1514,9 +1862,9 @@ function drawEstrutura(){
     ctx.font = 'bold 11px Segoe UI';
     const netTxt = (rd(R.net) > 0 ? '+' : '') + rd(R.net);
     const tags = [
-      ['☀️ RADIAÇÃO SOLAR: ' + rd(R.S) + ' W/m²', '#fde047'],
-      ['🔴 TERRESTRE (superfície): ' + rd(R.Es) + ' W/m²', '#ef4444'],
-      ['⚖️ SALDO: ' + netTxt + ' W/m²', Math.abs(R.net) < 1.5 ? '#4ade80' : (R.net > 0 ? '#fb923c' : '#38bdf8')]
+      ['{{i:sun}} RADIAÇÃO SOLAR: ' + rd(R.S) + ' W/m²', '#fde047'],
+      ['{{i:dot-red}} TERRESTRE (superfície): ' + rd(R.Es) + ' W/m²', '#ef4444'],
+      ['{{i:scale}} SALDO: ' + netTxt + ' W/m²', Math.abs(R.net) < 1.5 ? '#4ade80' : (R.net > 0 ? '#fb923c' : '#38bdf8')]
     ];
     tags.forEach((tg, i) => {
       const yy = 14 + i*18;
@@ -1526,54 +1874,68 @@ function drawEstrutura(){
       ctx.fillText(tg[0], RULER_WIDTH + 14, yy + 12);
     });
   }
+  });
 
   // 8. Paisagem (serra, floresta, cidade), solo em corte e poluição
   if (ySurf - ls.mount*1.25 - ls.bld*2.5 < usableH + 10) drawLandscape(usableH, ySurf, ls);
-  drawGround(usableH, ySurf, ls);
-  drawSmog(usableH, ySurf, ls);
+  slot(0.5, () => drawGround(usableH, ySurf, ls), 'ground');
+  slot(-0.12, () => drawSmog(usableH, ySurf, ls));
 
   // 9. Nuvens (posições no mundo: acompanham zoom e deslocamento)
   if (state.showClouds){
     const s0 = ppk*1.1;
     const tipo = resolveCloud();
     const groundY = Math.min(ySurf, usableH + 40);
+    // a nuvem se forma (em vez de simplesmente aparecer): reinicia ao ligar ou trocar o tipo
+    const nowS = performance.now()/1000;
+    if (CLOUDANIM.key !== tipo + '|' + state.cloudSel){ CLOUDANIM.key = tipo + '|' + state.cloudSel; CLOUDANIM.t0 = nowS; }
+    const el = nowS - CLOUDANIM.t0;
     const mult = { cirrus:1.5, cirrocumulus:1.3, cirrostratus:1.2, altocumulus:1.3, altostratus:1.2,
                    stratocumulus:1.1, stratus:1.1, nimbostratus:1.2, cumulus:1.0, cumulonimbus:1.8 };
-    const put = (t, fx, km, k) => {
+    const put = (t, fx, km, k, delay) => {
+      const gp = clamp((el - (delay || 0))/(CLOUD_DUR[t] || 6), 0, 1);
+      if (gp <= 0) return;
       const s = s0*(mult[t] || 1)*(k || 1);
       const x = sxFromWorld(fx);
       if (x < -6*s || x > w + 6*s) return;
       let y = yFromKm(km);
       if (t === 'cumulonimbus') y -= 1.3*s;          // km = altitude da base
       if (y < -8*s || y > usableH + 8*s) return;
-      drawCloud(x, y, s, t, groundY);
+      const zc = -0.42 + 0.84*hash1((delay || 0)*7.13 + t.length*1.7 + km);   // profundidade (só vale na vista isométrica)
+      slot(zc, () => {
+        if (t === 'cumulus' || t === 'cumulonimbus'){   // ar úmido subindo até a base
+          const yBase = t === 'cumulus' ? y + 0.42*s : y + 1.3*s;
+          drawUpdraft(x, yBase, groundY, smooth01(gp*6)*(1 - smooth01((gp - 0.6)/0.4)));
+        }
+        drawCloud(x, y, s, t, groundY, gp);
+      });
     };
     if (tipo === 'none'){
       // ar seco (umidade baixa): céu limpo
     } else if (tipo === 'all'){
       [['cirrus',0.15,11],['cirrocumulus',0.38,10],['cirrostratus',0.62,10.5],['altocumulus',0.85,6],
        ['altostratus',0.20,4.5],['stratocumulus',0.42,1.8],['stratus',0.60,0.8],['nimbostratus',0.78,2.0],
-       ['cumulus',0.93,1.6],['cumulonimbus',0.50,1.4]].forEach(c => put(c[0], c[1], c[2]));
+       ['cumulus',0.93,1.6],['cumulonimbus',0.50,1.4]].forEach((c, i) => put(c[0], c[1], c[2], 1, i*0.4));
     } else {
       const drift = (time*0.3) % 1;
       const kmByType = { cirrus:10, cirrocumulus:10, cirrostratus:10.5, altocumulus:5, altostratus:4.5,
                          stratocumulus:1.8, stratus:1.2, nimbostratus:2.0, cumulus:1.6, cumulonimbus:1.4 };
       const km = kmByType[tipo] || 4;
       if (tipo === 'cumulonimbus'){
-        put(tipo, 0.30, km, 0.85); put(tipo, 0.72, km, 1.2);
+        put(tipo, 0.30, km, 0.85, 0); put(tipo, 0.72, km, 1.2, 1.0);
       } else {
-        for (let k=0; k<4; k++) put(tipo, ((k + 0.5)/4 + drift*0.1 + 0.05*hash1(k*3.3)) % 1, km + (hash1(k*7.1) - 0.5)*0.6);
+        for (let k=0; k<4; k++) put(tipo, ((k + 0.5)/4 + drift*0.1 + 0.05*hash1(k*3.3)) % 1, km + (hash1(k*7.1) - 0.5)*0.6, 1, k*0.5);
       }
     }
-  }
+  } else { CLOUDANIM.key = ''; }
 
   // 10. Objetos voadores (posição no mundo; escala moderada com o zoom)
   const objScale = Math.max(7, Math.min(13, w*0.011))*Math.min(3.5, Math.sqrt(view.zoom));
   const objs = [
-    { on: state.showPlane, km:10, fx: ((1.1 + time*0.02) % 1.2) - 0.05, kind:'plane' },
-    { on: state.showBalloon, km:2, fx: 0.30 + Math.sin(time*0.6)*0.05, yOff: Math.sin(time*1.2)*8, kind:'hot' },
-    { on: state.showWeather, km:30, fx: 0.72 + Math.sin(time*0.4)*0.03, rot: Math.sin(time*0.5)*0.15, kind:'wx' },
-    { on: state.showSat, km:400, fx: ((1.1 + time*0.015) % 1.2) - 0.05, kind:'sat' }
+    { on: state.showPlane, km:10, fx: ((1.1 + time*0.02) % 1.2) - 0.05, kind:'plane', z:-0.20 },
+    { on: state.showBalloon, km:2, fx: 0.30 + Math.sin(time*0.6)*0.05, yOff: Math.sin(time*1.2)*8, kind:'hot', z:0.12 },
+    { on: state.showWeather, km:30, fx: 0.72 + Math.sin(time*0.4)*0.03, rot: Math.sin(time*0.5)*0.15, kind:'wx', z:-0.05 },
+    { on: state.showSat, km:400, fx: ((1.1 + time*0.015) % 1.2) - 0.05, kind:'sat', z:-0.38 }
   ];
   objs.forEach(o => {
     if (!o.on) return;
@@ -1581,29 +1943,42 @@ function drawEstrutura(){
     if (y < -60 || y > usableH + 60) return;
     const x = sxFromWorld(o.fx);
     if (x < -160 || x > w + 160) return;
-    ctx.strokeStyle = 'rgba(255,255,255,.12)';
-    ctx.setLineDash([3,4]);
-    ctx.beginPath(); ctx.moveTo(RULER_WIDTH, y); ctx.lineTo(w, y); ctx.stroke();
-    ctx.setLineDash([]);
-    if (o.kind === 'plane'){ drawContrail(x, y, objScale); drawAirplane(x, y, objScale); }
-    else if (o.kind === 'hot') drawHotBalloon(x, y, objScale);
-    else if (o.kind === 'wx') drawWeatherBalloon(x, y, objScale, o.rot || 0);
-    else drawSatellite(x, y, objScale);
+    slot(o.z, () => {
+      ctx.strokeStyle = 'rgba(255,255,255,.12)';
+      ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(RULER_WIDTH, y); ctx.lineTo(w, y); ctx.stroke();
+      ctx.setLineDash([]);
+      if (o.kind === 'plane'){ drawContrail(x, y, objScale); drawAirplane(x, y, objScale); }
+      else if (o.kind === 'hot') drawHotBalloon(x, y, objScale);
+      else if (o.kind === 'wx') drawWeatherBalloon(x, y, objScale, o.rot || 0);
+      else drawSatellite(x, y, objScale);
+    });
   });
 
   // 11. Marcador de sondagem
+  slot(0.5, () => {
   const altY = yFromKm(state.alt);
   if (altY >= 0 && altY <= usableH){
     ctx.strokeStyle = '#38bdf8'; ctx.setLineDash([5,5]); ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(RULER_WIDTH, altY); ctx.lineTo(w, altY); ctx.stroke();
     ctx.setLineDash([]);
     ctx.font = 'bold 11px Segoe UI';
-    const lab = '📍 ' + fmtKm(state.alt) + '  (' + tempAt(state.alt).toFixed(1) + ' °C)';
+    const lab = '{{i:map-pin}} ' + fmtKm(state.alt) + '  (' + tempAt(state.alt).toFixed(1) + ' °C)';
     ctx.fillStyle = 'rgba(15,23,42,.82)'; ctx.fillRect(RULER_WIDTH + 6, altY - 21, ctx.measureText(lab).width + 10, 16);
     ctx.fillStyle = '#7dd3fc'; ctx.fillText(lab, RULER_WIDTH + 11, altY - 9);
   }
+  });
+
+  // 11b. Animação didática: formação da nuvem
+  slot(99, () => {
+  if (state.showFormation){
+    const pw = Math.min(clamp(w*0.56, 380, 560), w - RULER_WIDTH - 30), ph = clamp(usableH*0.74, 300, 400);
+    drawCloudFormation(RULER_WIDTH + 14, 14, pw, Math.min(ph, usableH - 28));
+  }
+  }, 'raw');
 
   // 12. Leitura no cursor (mostra o ponto que servirá de âncora do zoom)
+  slot(0, () => {
   if (pointer.inside && !dragging && pointer.y >= 0 && pointer.y <= usableH && pointer.x > RULER_WIDTH){
     const km = kmFromU(uAtY(pointer.y));
     const txt = (km < 0.05 ? 'superfície' : fmtKm(km)) + ' · ' + tempAt(km).toFixed(0) + ' °C';
@@ -1617,8 +1992,10 @@ function drawEstrutura(){
     ctx.fillStyle = 'rgba(15,23,42,.85)'; ctx.fillRect(tx, pointer.y - 20, tw, 16);
     ctx.fillStyle = '#e2e8f0'; ctx.fillText(txt, tx + 6, pointer.y - 8);
   }
+  }, 'noclip');
 
   // 13. Régua de altitude (esquerda)
+  slot(0.5, () => {
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, RULER_WIDTH, usableH);
@@ -1658,6 +2035,9 @@ function drawEstrutura(){
   ctx.fillText('ALTITUDE', 0, 0);
   ctx.restore();
   ctx.restore();
+  }, 'noclip');
+
+  if (ISO.on) isoFlush(usableH, ySurf);
 
   // 14. Fundo da legenda
   ctx.fillStyle = '#0f172a';
@@ -1992,40 +2372,40 @@ function modHook(kind, x, y){
 const CIRC = { scene:'celulas', season:0.5, hour:14, mon:0, inten:0.6, showP:true };
 
 function buildCirc(p){
-  const scenes = [['celulas','🌀 Células e ventos'],['superficie','🌍 Vista de cima'],['brisas','🏖️ Brisas'],['moncoes','🌧️ Monções'],['chuvas','☔ Tipos de chuva']];
-  let body = cardHTML('🌐 Circulação da atmosfera', sceneButtons(scenes, CIRC.scene));
+  const scenes = [['celulas','<svg class=ic><use href=#i-cyclone></use></svg> Células e ventos'],['superficie','<svg class=ic><use href=#i-globe></use></svg> Vista de cima'],['brisas','<svg class=ic><use href=#i-beach></use></svg> Brisas'],['moncoes','<svg class=ic><use href=#i-cloud-rain></use></svg> Monções'],['chuvas','<svg class=ic><use href=#i-umbrella></use></svg> Tipos de chuva']];
+  let body = cardHTML('<svg class=ic><use href=#i-globe-grid></use></svg> Circulação da atmosfera', sceneButtons(scenes, CIRC.scene));
   const sc = CIRC.scene;
   if (sc === 'celulas' || sc === 'superficie'){
-    body += cardHTML('🎛️ Controles',
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles',
       sliderHTML('cSeason','cSeasonV','Época do ano', 0, 1, CIRC.season, 0.01, '—') +
       toggleHTML('cShowP','Mostrar zonas de pressão', CIRC.showP) +
       conceptHTML('<span id="cSeasonTxt"></span>'));
-    body += cardHTML('📖 Conceito (pág. 37)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Conceito (pág. 37)', conceptHTML(
       '<b>Pressão:</b> o ar aquecido dilata e fica leve (<b>baixa pressão</b>); o ar frio é denso e pesado (<b>alta pressão</b>). ' +
       '<b>Vento</b> é o ar em movimento, de um centro de alta pressão (anticiclone) para um de baixa (ciclone).<br><br>' +
       'Na circulação geral o ar <b>sobe</b> na ZCIT (equador, baixas pressões, chuvas) e perto de 60°, e <b>desce</b> perto de 30° e nos polos (altas pressões). ' +
       'Perto da superfície sopram os <b>alísios</b>, os <b>ventos de oeste</b> e os <b>ventos polares</b>; em altitude, os contra-alísios.'));
-    body += cardHTML('📖 Ao longo do ano (pág. 38)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Ao longo do ano (pág. 38)', conceptHTML(
       'Os centros de alta e baixa pressão <b>se deslocam</b> conforme o aquecimento da superfície muda com as estações. Isso ajuda a explicar a variação das chuvas e da intensidade dos ventos em cada período. ' +
       '<i>O deslocamento desenhado aqui é esquemático (exagerado).</i>'));
   } else if (sc === 'brisas'){
-    body += cardHTML('🎛️ Controles', sliderHTML('cHour','cHourV','Hora do dia', 0, 24, CIRC.hour, 0.25, '') + conceptHTML('<span id="cBreezeTxt"></span>'));
-    body += cardHTML('📖 Conceito (pág. 38)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles', sliderHTML('cHour','cHourV','Hora do dia', 0, 24, CIRC.hour, 0.25, '') + conceptHTML('<span id="cBreezeTxt"></span>'));
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Conceito (pág. 38)', conceptHTML(
       'As <b>brisas</b> são ventos de escala <b>local</b> e ciclo <b>diário</b>. Terra e água aquecem e esfriam em ritmos diferentes, o que cria uma célula de circulação entre elas. ' +
       'Pescadores artesanais aproveitam essas brisas para sair e voltar do mar.<br><br>' +
       '<b>Dia:</b> a terra aquece mais → o ar sobe sobre ela → brisa <b>marítima</b> (do mar para a terra). <b>Noite:</b> a terra esfria mais → brisa <b>terrestre</b> (da terra para o mar).<br><br>' +
       '<i>As temperaturas do desenho são ilustrativas.</i>'));
   } else if (sc === 'moncoes'){
-    body += cardHTML('🎛️ Controles', sliderHTML('cMon','cMonV','Período', 0, 1, CIRC.mon, 0.01, '') + conceptHTML('<span id="cMonTxt"></span>'));
-    body += cardHTML('📖 Monções (exercício 3, pág. 44)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles', sliderHTML('cMon','cMonV','Período', 0, 1, CIRC.mon, 0.01, '') + conceptHTML('<span id="cMonTxt"></span>'));
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Monções (exercício 3, pág. 44)', conceptHTML(
       'Monções são ventos que <b>invertem de direção</b> com as estações. Na região do Oceano Índico:<br>' +
       '• <b>Inverno (dez–jan):</b> o oceano fica mais aquecido que o continente → <b>baixa pressão</b> sobre o oceano e alta sobre o continente → ventos <b>do continente para o oceano</b> (secos).<br>' +
       '• <b>Verão (jul–ago):</b> o aquecimento se inverte → baixa pressão sobre o continente → ventos <b>do oceano para o continente</b> (úmidos), com chuvas abundantes e médias.<br><br>' +
       '<i>Mapa esquemático, sem escala.</i>'));
   } else {
-    body += cardHTML('🎛️ Controles', sliderHTML('cInten','cIntenV','Intensidade do processo', 0, 1, CIRC.inten, 0.01, '') +
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles', sliderHTML('cInten','cIntenV','Intensidade do processo', 0, 1, CIRC.inten, 0.01, '') +
       conceptHTML('Ajuste para ver quando a chuva começa em cada tipo.'));
-    body += cardHTML('📖 Tipos de chuva (pág. 37)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Tipos de chuva (pág. 37)', conceptHTML(
       '<b>Convectiva:</b> o ar quente sobe na vertical e encontra uma camada de ar frio em altitude; o vapor condensa (a evapotranspiração fornece umidade).<br>' +
       '<b>Frontal:</b> encontro de uma massa de ar quente com uma fria; o ar quente é forçado a subir.<br>' +
       '<b>Orográfica:</b> o ar úmido encontra uma região elevada e sobe: chove no <b>barlavento</b>; o <b>sotavento</b> fica sem chuva.'));
@@ -2146,18 +2526,28 @@ function drawCircDisc(){
   // subtropicais (altas): faixas mais fortes
   [B[2], B[4]].forEach(l => { ctx.fillStyle = 'rgba(200,80,60,.35)'; ctx.fillRect(cx - R, yOf(l + 5), 2*R, yOf(l - 5) - yOf(l + 5)); });
   // setas dos ventos (direções da figura do livro)
+  // cada seta fica centrada na sua linha e totalmente contida na faixa (zona) do seu vento,
+  // sem ultrapassar o limite com a faixa vizinha (ex.: 60° e ZCIT)
   const wind = [
-    { a:B[0], b:B[1], v:[-0.8, 0.6] }, { a:B[1], b:B[2], v:[0.8, -0.6] }, { a:B[2], b:B[3] + 8, v:[-0.7, 0.7] },
-    { a:B[3] - 8, b:B[4], v:[-0.7, -0.7] }, { a:B[4], b:B[5], v:[0.8, 0.6] }, { a:B[5], b:B[6], v:[-0.8, -0.6] }
+    { a:B[0], b:B[1], v:[-0.8, 0.6] }, { a:B[1], b:B[2], v:[0.8, -0.6] }, { a:B[2], b:B[3] + 4, v:[-0.7, 0.7] },
+    { a:B[3] - 4, b:B[4], v:[-0.7, -0.7] }, { a:B[4], b:B[5], v:[0.8, 0.6] }, { a:B[5], b:B[6], v:[-0.8, -0.6] }
   ];
   wind.forEach(wd => {
-    const ym = (yOf(wd.a) + yOf(wd.b))/2, half = Math.sqrt(Math.max(0, R*R - (ym - cy)*(ym - cy)));
-    const rows = Math.max(1, Math.round(Math.abs(yOf(wd.b) - yOf(wd.a))/34));
+    const PAD = 5, yTop = yOf(wd.a) + PAD, yBot = yOf(wd.b) - PAD, Hb = yBot - yTop;
+    if (Hb < 6) return;
+    const len = Math.min(46, Hb/Math.abs(wd.v[1]));           // comprimento que cabe na faixa
+    if (len < 10) return;
+    const dx = wd.v[0]*len, dy = wd.v[1]*len, hy = Math.abs(dy)/2;
+    const rows = Math.max(1, Math.min(Math.floor(Hb/(2*hy + 6)), Math.round(Hb/34)));
     for (let r=0; r<rows; r++){
-      const yy = yOf(wd.a) + (r + 0.5)/rows*(yOf(wd.b) - yOf(wd.a));
-      const hw = Math.sqrt(Math.max(0, R*R - (yy - cy)*(yy - cy))) - 14;
-      for (let x = cx - hw + 25; x < cx + hw - 20; x += 62){
-        flowPath([[x, yy], [x + wd.v[0]*46, yy + wd.v[1]*46]], '#1e293b', 1.6, { n:1, speed:0.22, base:0.55, head:5, phase:(x*0.013 + r*0.3) });
+      const yy = yTop + (r + 0.5)/rows*Hb;
+      const far = Math.max(Math.abs(yy - hy - cy), Math.abs(yy + hy - cy));
+      const hw = Math.sqrt(Math.max(0, R*R - far*far)) - 12 - Math.abs(dx)/2;   // arrow inteira dentro do disco
+      const off = (r % 2) * 31;
+      for (let k = -12; k <= 12; k++){
+        const xc = cx + k*62 + off;
+        if (Math.abs(xc - cx) > hw) continue;
+        flowPath([[xc - dx/2, yy - dy/2], [xc + dx/2, yy + dy/2]], '#1e293b', 1.6, { n:1, speed:0.22, base:0.55, head:5, phase:(xc*0.013 + r*0.3) });
       }
     }
   });
@@ -2409,49 +2799,49 @@ const CUR_TEXT = {
 };
 
 function buildFat(p){
-  const scenes = [['latitude','📐 Latitude'],['altitude','🏔️ Altitude'],['correntes','🌊 Correntes marítimas'],['maritimidade','🏖️ Maritimidade'],['relevo','⛰️ Relevo']];
-  let body = cardHTML('🧭 Fatores do clima', sceneButtons(scenes, FAT.scene, '#a3e635'));
+  const scenes = [['latitude','<svg class=ic><use href=#i-ruler></use></svg> Latitude'],['altitude','<svg class=ic><use href=#i-mountain-snow></use></svg> Altitude'],['correntes','<svg class=ic><use href=#i-waves></use></svg> Correntes marítimas'],['maritimidade','<svg class=ic><use href=#i-beach></use></svg> Maritimidade'],['relevo','<svg class=ic><use href=#i-mountain></use></svg> Relevo']];
+  let body = cardHTML('<svg class=ic><use href=#i-compass></use></svg> Fatores do clima', sceneButtons(scenes, FAT.scene, '#a3e635'));
   const sc = FAT.scene;
   if (sc === 'latitude'){
-    body += cardHTML('🎛️ Controles',
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles',
       sliderHTML('fLat','fLatV','Latitude', 0, 90, FAT.lat, 1, '') +
       '<div class="layer-grid"><button class="layer-btn" data-lat="0" style="color:#facc15">0°</button><button class="layer-btn" data-lat="45" style="color:#facc15">45°</button><button class="layer-btn" data-lat="60" style="color:#facc15">60°</button></div>' +
       conceptHTML('<span id="fLatTxt"></span><br><i>Também dá para clicar na Terra para escolher a latitude.</i>'));
-    body += cardHTML('📖 Latitude (pág. 39)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Latitude (pág. 39)', conceptHTML(
       'Perto do equador os raios solares chegam a ~90° o ano todo: muita energia por área e as <b>maiores temperaturas</b>. ' +
       'Com o aumento da latitude os raios ficam <b>oblíquos</b> e a mesma energia se espalha por uma área maior — o aquecimento diminui.<br><br>' +
       'Por isso a Terra se divide em <b>zonas</b> (tropical, temperadas, polares). Quanto menor a latitude, maiores as temperaturas médias e a chuva, e menores a variação da duração de dias e noites e a <b>amplitude térmica anual</b> ' +
       '(diferença entre a temperatura média do mês mais quente e a do mês mais frio).'));
   } else if (sc === 'altitude'){
-    body += cardHTML('🎛️ Controles',
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles',
       sliderHTML('fBase','fBaseV','Temperatura ao nível do mar', 15, 40, FAT.base, 0.5, '') +
       sliderHTML('fAlt','fAltV','Altitude do observador', 0, 4500, FAT.alt, 50, '') +
       conceptHTML('<span id="fAltTxt"></span>'));
-    body += cardHTML('📖 Altitude (pág. 40)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Altitude (pág. 40)', conceptHTML(
       'Quanto mais alto o lugar, menor a presença de gases atmosféricos e <b>menor a retenção de calor</b>. Há relação direta entre o aumento da altitude e a queda da temperatura: em média, <b>0,65 °C a cada 100 m</b>.<br><br>' +
       'Com 30 °C ao nível do mar (como na figura do livro): 23,5 °C a 1 000 m, 17 °C a 2 000 m e 10,5 °C a 3 000 m.'));
   } else if (sc === 'correntes'){
-    const opts = CURRENTS.map(c => '<option value="' + c.id + '"' + (c.id === FAT.sel ? ' selected' : '') + '>' + (c.t === 'w' ? '🔴 ' : '🔵 ') + c.n + '</option>').join('');
-    body += cardHTML('🎛️ Controles',
+    const opts = CURRENTS.map(c => '<option value="' + c.id + '"' + (c.id === FAT.sel ? ' selected' : '') + '>' + (c.t === 'w' ? 'Quente · ' : 'Fria · ') + c.n + '</option>').join('');
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles',
       toggleHTML('fWarm','Correntes quentes', FAT.showWarm) + toggleHTML('fCold','Correntes frias', FAT.showCold) + toggleHTML('fNames','Mostrar nomes', FAT.showNames) +
       '<select id="fCurSel" style="margin-top:4px">' + opts + '</select>' + conceptHTML('<span id="fCurTxt"></span>'));
-    body += cardHTML('📖 Correntes marítimas (pág. 40)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Correntes marítimas (pág. 40)', conceptHTML(
       'São grandes porções de água que se movem de modo mais ou menos independente da massa de água total, como “rios” no oceano, e têm dinâmica de circulação em <b>grandes células</b>. Fundamentais na redistribuição de calor do planeta.<br><br>' +
       '<b>Quentes:</b> formam-se em áreas equatoriais e fornecem calor ao ar. <b>Frias:</b> originam-se em áreas polares e reduzem a temperatura do litoral.<br><br><i>Trajetos esquemáticos, baseados no mapa do livro.</i>'));
   } else if (sc === 'maritimidade'){
-    body += cardHTML('🎛️ Controles',
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles',
       sliderHTML('fCont','fContV','Distância do mar (continentalidade)', 0, 1, FAT.cont, 0.01, '') +
       '<div class="layer-grid"><button class="layer-btn' + (FAT.hemi === 'N' ? ' active' : '') + '" data-hemi="N" style="color:#a3e635">Hemisfério Norte</button><button class="layer-btn' + (FAT.hemi === 'S' ? ' active' : '') + '" data-hemi="S" style="color:#a3e635">Hemisfério Sul</button></div>' +
       conceptHTML('<span id="fContTxt"></span>'));
-    body += cardHTML('📖 Maritimidade e continentalidade (págs. 40–41)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Maritimidade e continentalidade (págs. 40–41)', conceptHTML(
       'Grandes massas de água <b>retêm o calor por mais tempo</b> que rocha, solo ou floresta, e depois se resfriam mais lentamente. Assim, regiões com <b>maior continentalidade</b> têm <b>maior amplitude térmica anual</b>: verões mais quentes e invernos mais rigorosos que no litoral.<br><br>' +
       'No hemisfério sul há mais mar (maior maritimidade); por isso os solstícios são menos extremos que no norte.<br><br><i>As curvas de temperatura são ilustrativas.</i>'));
   } else {
-    body += cardHTML('🎛️ Controles',
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles',
       sliderHTML('fRelH','fRelHV','Altura da montanha', 300, 4000, FAT.relH, 50, '') +
       sliderHTML('fRelU','fRelUV','Umidade do ar vindo do mar', 0.2, 1, FAT.relU, 0.05, '') +
       toggleHTML('fColdCur','Corrente fria no litoral', FAT.coldCur) + conceptHTML('<span id="fRelTxt"></span>'));
-    body += cardHTML('📖 Relevo (pág. 41)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Relevo (pág. 41)', conceptHTML(
       'O relevo pode <b>facilitar, dificultar ou impedir</b> a passagem de massas de ar: cordilheiras e montanhas bloqueiam ou dificultam; a ausência de serras facilita a entrada. ' +
       'Também interfere na insolação e na orientação dos ventos, e é decisivo nas <b>chuvas orográficas</b>.<br><br>' +
       'Águas muito frias evaporam pouco; com montanhas que barram as nuvens, isso ajuda a formar desertos (Atacama, Colorado).<br><br><i>Valores do desenho são ilustrativos.</i>'));
@@ -2638,7 +3028,7 @@ function drawFatAltitude(){
   let ox = W*0.22; for (let i=0; i<=400; i++){ const x01 = 0.22 + i/400*0.78; if (altProfile(x01) >= FAT.alt){ ox = x01*W; break; } }
   ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(0, ay); ctx.lineTo(ox, ay); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = '#fde047'; ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ox, ay, 8, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-  drawLabel('📍 ' + FAT.alt + ' m · ' + T(FAT.alt).toFixed(1) + ' °C', Math.min(ox + 16, W - 190), ay - 12, { size: 13, color:'#fff', bg:'rgba(15,23,42,.8)', pad:6 });
+  drawLabel('{{i:map-pin}} ' + FAT.alt + ' m · ' + T(FAT.alt).toFixed(1) + ' °C', Math.min(ox + 16, W - 190), ay - 12, { size: 13, color:'#fff', bg:'rgba(15,23,42,.8)', pad:6 });
   // seta de queda
   arrowLine(W - 40, hm(300), W - 40, hm(3600), 'rgba(15,23,42,.7)', 2, 8);
   drawLabel('−0,65 °C / 100 m', W - 50, hm(1800), { size: 11.5, color:'#0f172a', align:'right' });
@@ -2670,7 +3060,7 @@ function drawFatCurrents(){
   if (FAT.sel === 'humboldt' || FAT.sel === 'california'){
     const pts = FAT.sel === 'humboldt' ? [[-69.5,-23.5,'Deserto do Atacama']] : [[-115.5,33.2,'Deserto do Colorado']];
     pts.forEach(d => { const q = proj(d[0], d[1]); ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(q[0], q[1], 9 + Math.sin(time*3)*2, 0, Math.PI*2); ctx.stroke();
-      drawLabel('🏜️ ' + d[2], q[0] + 14, q[1] + 4, { size: 11, color:'#fde047', bg:'rgba(15,23,42,.85)', pad:4 }); });
+      drawLabel('{{i:desert}} ' + d[2], q[0] + 14, q[1] + 4, { size: 11, color:'#fde047', bg:'rgba(15,23,42,.85)', pad:4 }); });
   }
   // legenda
   const ly = my + mh + 20;
@@ -2953,22 +3343,22 @@ const MAS = { scene:'brasil', season:1, sel:null, showMass:{ mEa:true, mEc:true,
 let MAS_MAP = null;
 
 function buildMas(p){
-  const scenes = [['brasil','🇧🇷 Massas no Brasil'],['mundo','🌍 Regiões de formação']];
-  let body = cardHTML('🇧🇷 Massas de ar', sceneButtons(scenes, MAS.scene, '#f472b6'));
+  const scenes = [['brasil','<svg class=ic><use href=#i-map></use></svg> Massas no Brasil'],['mundo','<svg class=ic><use href=#i-globe></use></svg> Regiões de formação']];
+  let body = cardHTML('<svg class=ic><use href=#i-map></use></svg> Massas de ar', sceneButtons(scenes, MAS.scene, '#f472b6'));
   if (MAS.scene === 'brasil'){
-    body += cardHTML('🎛️ Estação', sliderHTML('mSeason','mSeasonV','Verão ↔ Inverno', 0, 1, MAS.season, 0.01, '') +
-      '<div class="layer-grid"><button class="layer-btn" data-season="0" style="color:#fbbf24">☀️ Verão</button><button class="layer-btn" data-season="1" style="color:#38bdf8">❄️ Inverno</button></div>' +
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Estação', sliderHTML('mSeason','mSeasonV','Verão ↔ Inverno', 0, 1, MAS.season, 0.01, '') +
+      '<div class="layer-grid"><button class="layer-btn" data-season="0" style="color:#fbbf24"><svg class=ic><use href=#i-sun></use></svg> Verão</button><button class="layer-btn" data-season="1" style="color:#38bdf8"><svg class=ic><use href=#i-snowflake></use></svg> Inverno</button></div>' +
       toggleHTML('mClim','Mostrar climas ao fundo', MAS.climBg));
-    body += cardHTML('🌬️ Massas (clique para destacar)', '<div class="layer-grid">' + Object.keys(MASS_INFO).map(k =>
+    body += cardHTML('<svg class=ic><use href=#i-wind></use></svg> Massas (clique para destacar)', '<div class="layer-grid">' + Object.keys(MASS_INFO).map(k =>
       '<button class="layer-btn' + (MAS.sel === k ? ' active' : '') + '" data-mass="' + k + '" style="color:' + (k === 'mEc' ? '#e5e7eb' : MASS_INFO[k].col) + '"><div class="layer-dot" style="background:' + (k === 'mEc' ? '#9ca3af' : MASS_INFO[k].col) + '"></div>' + k + '</button>').join('') + '</div>' +
       conceptHTML('<span id="mMassTxt">Clique em uma massa para ver sua ação e os climas que ela influencia.</span>'));
-    body += cardHTML('📖 Conceito (págs. 41–42)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Conceito (págs. 41–42)', conceptHTML(
       '<b>Massa de ar</b> é uma grande extensão (vertical e horizontal) de ar que se forma sobre uma superfície relativamente homogênea (desertos, oceanos, geleiras…) e se desloca levando suas características de <b>temperatura e umidade</b> a outras regiões.<br><br>' +
       'Pela posição geográfica, o Brasil recebe a influência de <b>cinco massas de ar</b>. Nas legendas do livro: <b>a</b> = atlântica, <b>c</b> = continental.<br><br><i>Setas esquemáticas, baseadas nos mapas “ação das massas de ar no verão / inverno”.</i>'));
   } else {
-    body += cardHTML('🎛️ Exibir', toggleHTML('mShowP','Massas polares e árticas', MAS.showP) + toggleHTML('mShowT','Massas tropicais e equatoriais', MAS.showT) +
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Exibir', toggleHTML('mShowP','Massas polares e árticas', MAS.showP) + toggleHTML('mShowT','Massas tropicais e equatoriais', MAS.showT) +
       conceptHTML('<span id="mWorldTxt">Passe o mouse (ou toque) sobre uma região para ver o detalhe.</span>'));
-    body += cardHTML('📖 Regiões de formação (pág. 41)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Regiões de formação (pág. 41)', conceptHTML(
       'As massas se originam sobre superfícies homogêneas. No mapa: <b>cA/cAA</b> (ártica/antártica continental), <b>cP</b> e <b>mP</b> (polar continental e marítima), <b>cT</b> e <b>mT</b> (tropical continental e marítima) e <b>mE</b> (equatorial).<br><br>' +
       '<i>Convenção usual: <b>m</b> = marítima (mais úmida); <b>c</b> = continental (mais seca). Regiões desenhadas de forma esquemática (elipses).</i>'));
   }
@@ -2987,8 +3377,14 @@ function masMassText(){
   const k = MAS.sel; el.innerHTML = k ? '<b>' + MASS_INFO[k].n + '</b><br>' + MASS_INFO[k].txt : 'Clique em uma massa para ver sua ação e os climas que ela influencia.';
 }
 
+const MAS_LEG = [['mEa','Equatorial Atlântica'],['mEc','Equatorial Continental'],['mTa','Tropical Atlântica'],['mTc','Tropical Continental'],['mPa','Polar Atlântica']];
 function drawMasBrasil(){
-  const r = brRect(30, 62, W - 60, H - 96);
+  // a legenda fica ABAIXO do mapa (não por cima), então o mapa usa só o espaço que sobra
+  const LEG_W = 172, legRows = rw => Math.ceil(MAS_LEG.length/clamp(Math.floor(rw/LEG_W), 1, MAS_LEG.length));
+  let r = brRect(30, 62, W - 60, H - 96 - 36);
+  let legH = legRows(r.w)*20 + 12;
+  r = brRect(30, 62, W - 60, H - 96 - legH);
+  legH = legRows(r.w)*20 + 12;
   const s = smooth01(MAS.season);
   const proj = drawBrazilBase(r);
   MAS_MAP = { proj, r };
@@ -3025,14 +3421,14 @@ function drawMasBrasil(){
   ctx.restore();
   // selo da estação
   drawLabel(s < 0.5 ? 'VERÃO' : 'INVERNO', r.x + 16, r.y + 30, { size: 16, color:'#fff', bg: s < 0.5 ? 'rgba(220,38,38,.85)' : 'rgba(30,64,175,.85)', pad:10 });
-  // legenda
-  const lx = r.x + 14, ly = r.y + r.h - 108;
-  ctx.fillStyle = 'rgba(15,23,42,.82)'; roundRect(lx - 8, ly - 18, 190, 116, 8); ctx.fill();
-  [['mEa','Equatorial Atlântica'],['mEc','Equatorial Continental'],['mTa','Tropical Atlântica'],['mTc','Tropical Continental'],['mPa','Polar Atlântica']].forEach((m, i) => {
-    arrowLine(lx, ly + i*20, lx + 26, ly + i*20, MASS_INFO[m[0]].col === '#111827' ? '#9ca3af' : MASS_INFO[m[0]].col, 3, 6);
-    drawLabel(m[1], lx + 34, ly + i*20 + 4, { size: 11, bold:false });
+  // legenda (abaixo do mapa, sem cobrir nenhuma corrente de ar)
+  const perRow = Math.ceil(MAS_LEG.length/legRows(r.w)), cw = r.w/perRow, ly0 = r.y + r.h + 18;   // distribui por igual nas linhas
+  MAS_LEG.forEach((m, i) => {
+    const lx = r.x + (i % perRow)*cw + 4, ly = ly0 + Math.floor(i/perRow)*20;
+    arrowLine(lx, ly, lx + 26, ly, MASS_INFO[m[0]].col === '#111827' ? '#9ca3af' : MASS_INFO[m[0]].col, 3, 6);
+    drawLabel(m[1], lx + 34, ly + 4, { size: 11, bold:false });
   });
-  noteTag('Mapa esquemático (pág. 42). Os limites e as setas não estão em escala.', r.x, r.y + r.h + 16);
+  noteTag('Mapa esquemático (pág. 42). Os limites e as setas não estão em escala.', r.x, r.y + r.h + legH + 22);
 }
 function hexToRgb(h){ const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
 
@@ -3118,22 +3514,22 @@ function climoStats(d){
   return { tot, tm, amp, dry, dryN: dry.length };
 }
 function buildClimo(p){
-  let body = cardHTML('📊 Climogramas', '<div class="layer-grid">' +
-    '<button class="layer-btn' + (MC.mode === 'explorar' ? ' active' : '') + '" data-cmode="explorar" style="color:#38bdf8">🔎 Explorar</button>' +
-    '<button class="layer-btn' + (MC.mode === 'desafio' ? ' active' : '') + '" data-cmode="desafio" style="color:#f472b6">🎯 Desafio</button></div>');
+  let body = cardHTML('<svg class=ic><use href=#i-bar-chart></use></svg> Climogramas', '<div class="layer-grid">' +
+    '<button class="layer-btn' + (MC.mode === 'explorar' ? ' active' : '') + '" data-cmode="explorar" style="color:#38bdf8"><svg class=ic><use href=#i-search></use></svg> Explorar</button>' +
+    '<button class="layer-btn' + (MC.mode === 'desafio' ? ' active' : '') + '" data-cmode="desafio" style="color:#f472b6"><svg class=ic><use href=#i-target></use></svg> Desafio</button></div>');
   if (MC.mode === 'explorar'){
-    body += cardHTML('🏙️ Cidades (págs. 42–43)', '<div class="layer-grid">' + CLIMO_ORDER.map(k =>
+    body += cardHTML('<svg class=ic><use href=#i-building></use></svg> Cidades (págs. 42–43)', '<div class="layer-grid">' + CLIMO_ORDER.map(k =>
       '<button class="layer-btn' + (MC.sel === k ? ' active' : '') + '" data-city="' + k + '" style="color:#fbbf24">' + CLIMO[k].n.split(' (')[0] + '</button>').join('') + '</div>' +
       toggleHTML('cSecas','Polígono das secas', MC.secas) + toggleHTML('cGeada','Ocorrência de geada', MC.geada) +
       conceptHTML('<span id="cInfo"></span>'));
-    body += cardHTML('📖 Como ler um climograma', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Como ler um climograma', conceptHTML(
       'As <b>barras azuis</b> mostram a chuva média de cada mês (mm, eixo esquerdo); a <b>linha vermelha</b>, a temperatura média (°C, eixo direito). ' +
       'Observe: o <b>total anual</b>, os <b>meses secos</b> e a <b>amplitude térmica</b>.<br><br>' +
       '<i>Valores lidos dos gráficos do livro (aproximados: chuva ±5 mm, temperatura ±0,5 °C).</i>'));
   } else {
-    body += cardHTML('🎯 Qual é o clima?', conceptHTML('O climograma ao lado não mostra título. Observe o total de chuva, a estação seca e as temperaturas e escolha:') +
+    body += cardHTML('<svg class=ic><use href=#i-target></use></svg> Qual é o clima?', conceptHTML('O climograma ao lado não mostra título. Observe o total de chuva, a estação seca e as temperaturas e escolha:') +
       '<div class="layer-grid" style="margin-top:6px">' + CLIMO_ORDER.map(k => '<button class="layer-btn" data-guess="' + k + '" style="color:#f472b6">' + CLIMO[k].climN.replace('Clima ', '') + '</button>').join('') + '</div>' +
-      '<button class="full" id="cNext" style="margin-top:8px">🔀 Novo desafio</button>' + conceptHTML('<span id="cFeed">Escolha uma opção.</span>'));
+      '<button class="full" id="cNext" style="margin-top:8px"><svg class=ic><use href=#i-shuffle></use></svg> Novo desafio</button>' + conceptHTML('<span id="cFeed">Escolha uma opção.</span>'));
   }
   p.innerHTML = body;
   p.querySelectorAll('[data-cmode]').forEach(b => { b.onclick = () => { MC.mode = b.dataset.cmode; MC.answer = null; if (MC.mode === 'desafio') climoNewChallenge(); buildClimo(p); }; });
@@ -3153,7 +3549,7 @@ function climoGuess(k){
   const t = CLIMO[MC.target], ok = CLIMO[k].clim === t.clim;
   MC.answer = k;
   const st = climoStats(t), ct = CLIM_TEXT[t.clim];
-  $('cFeed').innerHTML = (ok ? '✅ <b>Correto!</b> ' : '❌ <b>Não é esse.</b> ') + 'Era <b>' + t.n + '</b> — ' + t.climN.toLowerCase() + '.<br>Total ≈ ' + Math.round(st.tot) + ' mm, ' + st.dryN + ' mês(es) com menos de 60 mm, amplitude ≈ ' + st.amp.toFixed(1) + ' °C.<br>' + ct.txt;
+  $('cFeed').innerHTML = (ok ? '<svg class=ic style=color:#4ade80><use href=#i-check-circle></use></svg> <b>Correto!</b> ' : '<svg class=ic style=color:#f87171><use href=#i-x-circle></use></svg> <b>Não é esse.</b> ') + 'Era <b>' + t.n + '</b> — ' + t.climN.toLowerCase() + '.<br>Total ≈ ' + Math.round(st.tot) + ' mm, ' + st.dryN + ' mês(es) com menos de 60 mm, amplitude ≈ ' + st.amp.toFixed(1) + ' °C.<br>' + ct.txt;
 }
 function climoInfo(){
   const el = $('cInfo'); if (!el) return;
@@ -3292,15 +3688,15 @@ const SYN_INFO = {
 const SYN_LINK = { atm:'estrutura', tempo:null, clima:null, elem:'estrutura', fat:'fatores', circ:'circulacao', brasil:'massas' };
 
 function buildSyn(p){
-  const scenes = [['mapa','🧠 Mapa conceitual'],['exercicios','✏️ Exercícios']];
-  let body = cardHTML('🧠 Síntese da unidade', sceneButtons(scenes, SYN.scene, '#fb7185'));
+  const scenes = [['mapa','<svg class=ic><use href=#i-network></use></svg> Mapa conceitual'],['exercicios','<svg class=ic><use href=#i-pencil></use></svg> Exercícios']];
+  let body = cardHTML('<svg class=ic><use href=#i-network></use></svg> Síntese da unidade', sceneButtons(scenes, SYN.scene, '#fb7185'));
   if (SYN.scene === 'mapa'){
-    body += cardHTML('📖 Tempo × Clima (pág. 34)', conceptHTML(
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Tempo × Clima (pág. 34)', conceptHTML(
       'O <b>tempo meteorológico</b> é o conjunto de condições da atmosfera em um dado momento e lugar — sua marca é a <b>instabilidade</b> (muda em minutos, horas ou dias).<br><br>' +
       'O <b>clima</b> é a sucessão dos tipos de tempo ao longo de, geralmente, pelo menos <b>30 anos</b>: um padrão de médias de temperatura e pluviosidade que caracteriza uma região. O clima também pode mudar, mas normalmente em séculos ou milênios.'));
-    body += cardHTML('🖱️ Navegar', conceptHTML('Clique em um nó para ver o resumo. Nós ligados a um módulo (Estrutura, Fatores, Circulação, Massas) abrem um botão para ir direto a ele.<br><br><span id="synNodeInfo">Clique em um nó do mapa.</span>'));
+    body += cardHTML('<svg class=ic><use href=#i-mouse-pointer></use></svg> Navegar', conceptHTML('Clique em um nó para ver o resumo. Nós ligados a um módulo (Estrutura, Fatores, Circulação, Massas) abrem um botão para ir direto a ele.<br><br><span id="synNodeInfo">Clique em um nó do mapa.</span>'));
   } else {
-    body += cardHTML('📝 Exercícios "Faça em sala" (pág. 44)', '<div class="layer-grid">' + [1,2,3,4].map(n =>
+    body += cardHTML('<svg class=ic><use href=#i-file-text></use></svg> Exercícios "Faça em sala" (pág. 44)', '<div class="layer-grid">' + [1,2,3,4].map(n =>
       '<button class="layer-btn' + (SYN.ex === n ? ' active' : '') + '" data-ex="' + n + '" style="color:#fb7185">Questão ' + n + '</button>').join('') + '</div>');
     body += '<div id="synExBox"></div>';
   }
@@ -3312,8 +3708,8 @@ function buildSyn(p){
 function buildExBox(){
   const el = $('synExBox'); if (!el) return;
   const n = SYN.ex, EX = SYN_EXERCISES[n];
-  let h = cardHTML('❓ ' + EX.title, conceptHTML(EX.stem));
-  h += cardHTML('✅ Sua análise', '<button class="full" id="synToggle">' + (SYN.showAns[n] ? 'Ocultar resposta' : 'Mostrar resposta comentada') + '</button>' +
+  let h = cardHTML('<svg class=ic><use href=#i-help-circle></use></svg> ' + EX.title, conceptHTML(EX.stem));
+  h += cardHTML('<svg class=ic style=color:#4ade80><use href=#i-check-circle></use></svg> Sua análise', '<button class="full" id="synToggle">' + (SYN.showAns[n] ? 'Ocultar resposta' : 'Mostrar resposta comentada') + '</button>' +
     (SYN.showAns[n] ? conceptHTML(EX.answer) : ''));
   el.innerHTML = h;
   if ($('synToggle')) $('synToggle').onclick = () => { SYN.showAns[n] = !SYN.showAns[n]; buildExBox(); };
@@ -3396,7 +3792,7 @@ function drawSyn(){
     // pequenas ilustrações de apoio por questão
     const iy = 160;
     if (SYN.ex === 1){ cloudCumulus(160, iy, 30); drawSun(320, iy - 10); drawLabel('previsão do tempo → decisões no campo', 20, iy + 70, { size: 11, color:'#94a3b8', bold:false }); }
-    else if (SYN.ex === 2){ drawLabel('🌾 setor primário depende diretamente do tempo', 20, iy, { size: 12, color:'#a3e635', bold:false }); drawLabel('🏭 tecnologia e infraestrutura reduzem a vulnerabilidade', 20, iy + 24, { size: 12, color:'#7dd3fc', bold:false }); }
+    else if (SYN.ex === 2){ drawLabel('{{i:wheat}} setor primário depende diretamente do tempo', 20, iy, { size: 12, color:'#a3e635', bold:false }); drawLabel('{{i:factory}} tecnologia e infraestrutura reduzem a vulnerabilidade', 20, iy + 24, { size: 12, color:'#7dd3fc', bold:false }); }
     else if (SYN.ex === 3){ arrowLine(140, iy, 260, iy, '#fb923c', 3, 7); drawLabel('inverno: continente → oceano', 140, iy + 20, { size: 10.5, bold:false }); arrowLine(260, iy + 46, 140, iy + 46, '#7dd3fc', 3, 7); drawLabel('verão: oceano → continente', 140, iy + 66, { size: 10.5, bold:false }); }
     else { cloudCumulus(140, iy, 22); cloudCumulus(210, iy - 8, 18); drawLabel('menos floresta → menos evapotranspiração → chuva se desloca', 20, iy + 60, { size: 11, color:'#94a3b8', bold:false }); }
     ctx.restore();
@@ -3433,15 +3829,15 @@ function updateReadouts(){
     const R = radBudget(), f = v => Math.round(v);
     const netTxt = (f(R.net) > 0 ? '+' : '') + f(R.net);
     $('radReadout').innerHTML =
-      '☀️ Incidente: <b>' + f(R.S) + ' W/m²</b><br>' +
-      '⚪ Refletida: <b>' + f(R.refl) + '</b> (nuvens/atmosfera ' + f(R.reflAtm) + ' + superfície ' + f(R.reflSup) + ')<br>' +
-      '🟡 Absorvida pela atmosfera: <b>' + f(R.absAtm) + '</b><br>' +
-      '🟡 Absorvida pela superfície: <b>' + f(R.absSup) + '</b><br>' +
-      '🔴 Emitida pela superfície (' + f(R.Tc) + ' °C): <b>' + f(R.Es) + '</b><br>' +
-      '🟠 Radiação de retorno: <b>' + f(R.back) + '</b><br>' +
-      '🪟 Janela atmosférica: <b>' + f(R.win) + '</b> · 💧 calor latente: <b>' + f(R.latent) + '</b> · 🌡️ sensível: <b>' + f(R.sens) + '</b><br>' +
-      '🌍 Onda longa ao espaço: <b>' + f(R.olr) + '</b><br>' +
-      '⚖️ Saldo: <b>' + netTxt + ' W/m²</b><br>' +
+      '<svg class=ic><use href=#i-sun></use></svg> Incidente: <b>' + f(R.S) + ' W/m²</b><br>' +
+      '<svg class=ic><use href=#i-dot-white></use></svg> Refletida: <b>' + f(R.refl) + '</b> (nuvens/atmosfera ' + f(R.reflAtm) + ' + superfície ' + f(R.reflSup) + ')<br>' +
+      '<svg class=ic><use href=#i-dot-yellow></use></svg> Absorvida pela atmosfera: <b>' + f(R.absAtm) + '</b><br>' +
+      '<svg class=ic><use href=#i-dot-yellow></use></svg> Absorvida pela superfície: <b>' + f(R.absSup) + '</b><br>' +
+      '<svg class=ic><use href=#i-dot-red></use></svg> Emitida pela superfície (' + f(R.Tc) + ' °C): <b>' + f(R.Es) + '</b><br>' +
+      '<svg class=ic><use href=#i-dot-orange></use></svg> Radiação de retorno: <b>' + f(R.back) + '</b><br>' +
+      '<svg class=ic><use href=#i-window></use></svg> Janela atmosférica: <b>' + f(R.win) + '</b> · <svg class=ic><use href=#i-droplet></use></svg> calor latente: <b>' + f(R.latent) + '</b> · <svg class=ic><use href=#i-thermometer></use></svg> sensível: <b>' + f(R.sens) + '</b><br>' +
+      '<svg class=ic><use href=#i-globe></use></svg> Onda longa ao espaço: <b>' + f(R.olr) + '</b><br>' +
+      '<svg class=ic><use href=#i-scale></use></svg> Saldo: <b>' + netTxt + ' W/m²</b><br>' +
       '<span style="color:#64748b">≈ 0: equilíbrio · &gt; 0: aquece · &lt; 0: esfria.<br>Os valores do padrão são os da figura (pág. 36); a resposta aos controles é ilustrativa (qualitativa), maior que a variação real.</span>';
   }
 
@@ -3461,11 +3857,149 @@ function updateReadouts(){
       cumulus:'<b>Desenvolvimento vertical</b>. Algodão, bom tempo.',
       cumulonimbus:'<b>Desenvolvimento vertical</b>. Tempestade, raios, granizo.'
     };
+    const forma = {
+      cirrus:'Cristais de gelo a 7–13 km, esticados pelos ventos fortes em altitude: as fibras se alongam e se desfazem.',
+      cirrocumulus:'Pequenos flocos de gelo surgem aos poucos em uma camada alta, em ondulações do ar.',
+      cirrostratus:'Um véu de cristais de gelo se espalha e engrossa, em ascensão lenta e extensa do ar.',
+      altocumulus:'Em níveis médios, massas de ar ondulantes condensam em flocos que surgem em pontos diferentes.',
+      altostratus:'Ascensão ampla e lenta do ar em níveis médios: o véu cinza se espalha e engrossa.',
+      stratocumulus:'Convecção fraca sob uma camada estável: rolos se formam lado a lado.',
+      stratus:'Ar úmido resfria perto da superfície e a camada se espalha de modo uniforme.',
+      nimbostratus:'Ascensão lenta de grandes massas de ar úmido: a camada se espalha, escurece e passa a chover.',
+      cumulus:'Convecção: o ar quente e úmido sobe, esfria, condensa e a nuvem cresce de baixo para cima.',
+      cumulonimbus:'Convecção intensa: a torre sobe até a tropopausa, o topo se achata em bigorna e vêm chuva e raios.'
+    };
     let txt = descs[tipo] || descs.cirrus;
+    if (forma[tipo]) txt += '<br><b>Como se forma:</b> ' + forma[tipo];
     if (state.cloudSel === 'auto') txt += ' <span style="color:#64748b">(automático: UR ' + state.humid + ' %' + (state.humid >= 100 ? ' = saturação → precipitação' : '') + ')</span>';
     $('cloudReadout').innerHTML = txt;
   }
   syncZoomUI();
+}
+
+/* ============ VISÃO ISOMÉTRICA (ângulo raso) ============
+   Diorama dentro de uma caixa de vidro: cada elemento da cena é desenhado no seu próprio
+   plano de profundidade (slot) e projetado em perspectiva isométrica ortogonal. O fundo
+   (céu, estrelas, sol), as paredes e o piso formam o interior; montanhas, floresta, cidade,
+   nuvens, balões, avião e satélite ficam em profundidades diferentes dentro da caixa. */
+const ISO_ELEV = 12, ISO_YAW = 28;                 // graus: ângulo raso
+
+function isoApply(){
+  const on = !!(state.iso && currentMode === 'estrutura');
+  if (on === ISO.on) return;
+  ISO.on = on;
+  canvas.parentElement.classList.toggle('iso', on);
+  if (on) isoLayout(); else ISO.inv = null;
+}
+
+function isoLayout(){
+  if (!ISO.on) return;
+  const Hu = H - LEGEND_HEIGHT, Wb = W - RULER_WIDTH, D = Math.round(Wb*0.46);
+  const cx0 = RULER_WIDTH + Wb/2, cy0 = Hu/2;
+  const rot = (sc, tx, ty) => new DOMMatrix().translate(tx, ty, 0).scale(sc, sc, sc)
+                 .rotateAxisAngle(1, 0, 0, -ISO_ELEV).rotateAxisAngle(0, 1, 0, -ISO_YAW);
+  const S0 = rot(1, 0, 0); let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  const pts = [];
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) pts.push([sx*Wb/2, sy*Hu/2, sz*D/2]);
+  pts.push([-Wb/2 - RULER_WIDTH, -Hu/2, D/2], [-Wb/2 - RULER_WIDTH, Hu/2, D/2]);       // régua à esquerda
+  pts.forEach(q => { const p = S0.transformPoint(new DOMPoint(q[0], q[1], q[2]));
+    x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); });
+  const sc = Math.min((W - 24)/(x1 - x0), (Hu - 20)/(y1 - y0));
+  ISO.S = rot(sc, W/2 - sc*(x0 + x1)/2, Hu/2 - sc*(y0 + y1)/2);
+  ISO.Wb = Wb; ISO.D = D; ISO.cx0 = cx0; ISO.cy0 = cy0;
+  const P = ISO.S.translate(-cx0, -cy0, 0);                     // plano da cena em profundidade 0 (usado pelo mouse)
+  ISO.inv = new DOMMatrix([P.m11, P.m12, P.m21, P.m22, P.m41, P.m42]).inverse();
+}
+
+function isoSkyGrad(usableH){
+  const vy = getViewWindow(), g = ctx.createLinearGradient(0, 0, 0, usableH), NG = 40;
+  for (let i=0; i<=NG; i++){ const t = i/NG; g.addColorStop(t, rgbS(skyColor(kmFromU(vy.uMax - t*(vy.uMax - vy.uMin))))); }
+  return g;
+}
+
+function isoFlush(Hu, ySurf){
+  const dpr = window.devicePixelRatio || 1, S = ISO.S, Wb = ISO.Wb, D = ISO.D, cx0 = ISO.cx0, cy0 = ISO.cy0;
+  if (!S) return;
+  const yG = clamp(ySurf, 0, Hu);
+  const setM = M => ctx.setTransform(dpr*M.m11, dpr*M.m12, dpr*M.m21, dpr*M.m22, dpr*M.m41, dpr*M.m42);
+  const planeZ = f => S.translate(-cx0, -cy0, f*D);
+  const face = (ux,uy,uz, vx,vy,vz, ox,oy,oz) => {
+    const nx = uy*vz - uz*vy, ny = uz*vx - ux*vz, nz = ux*vy - uy*vx;
+    return S.multiply(new DOMMatrix([ux,uy,uz,0, vx,vy,vz,0, nx,ny,nz,0, ox,oy,oz,1]));
+  };
+  const reset = () => ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // ---- parede esquerda (face interna): céu em corte, com as linhas das camadas ----
+  if (yG > 0){
+    ctx.save(); setM(face(0,0,1, 0,1,0, -Wb/2, -Hu/2, -D/2));
+    ctx.beginPath(); ctx.rect(0, 0, D, yG); ctx.clip();
+    ctx.fillStyle = isoSkyGrad(Hu); ctx.fillRect(0, 0, D, yG);
+    const sh = ctx.createLinearGradient(0, 0, D, 0); sh.addColorStop(0, 'rgba(0,0,0,.10)'); sh.addColorStop(1, 'rgba(0,0,0,.42)');
+    ctx.fillStyle = sh; ctx.fillRect(0, 0, D, yG);
+    ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1; ctx.setLineDash([6, 6]);
+    [12, 50, 80].forEach(km => { const y = yFromKm(km); if (y > 0 && y < yG){ ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(D, y); ctx.stroke(); } });
+    ctx.setLineDash([]); ctx.restore();
+  }
+  // ---- piso: gramado em perspectiva, com faixas de plantio e profundidade ----
+  if (ySurf < Hu + 60){
+    ctx.save(); setM(face(1,0,0, 0,0,1, -Wb/2, ySurf - cy0, -D/2));
+    ctx.beginPath(); ctx.rect(0, 0, Wb, D); ctx.clip();
+    const fg = ctx.createLinearGradient(0, 0, 0, D);
+    fg.addColorStop(0, '#7aa65a'); fg.addColorStop(0.5, '#4f8a3a'); fg.addColorStop(1, '#3a7430');
+    ctx.fillStyle = fg; ctx.fillRect(0, 0, Wb, D);
+    ctx.lineWidth = 1;
+    for (let u = 0; u <= Wb; u += 44){ ctx.strokeStyle = 'rgba(20,60,20,' + (0.10 + 0.08*hash1(u*0.31)).toFixed(2) + ')'; ctx.beginPath(); ctx.moveTo(u, 0); ctx.lineTo(u, D); ctx.stroke(); }
+    for (let v = 0; v <= D; v += 34){ ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.beginPath(); ctx.moveTo(0, v); ctx.lineTo(Wb, v); ctx.stroke(); }
+    ctx.restore();
+  }
+  // ---- lateral direita do solo (corte em profundidade) ----
+  if (ySurf < Hu){
+    ctx.save(); setM(face(0,0,-1, 0,1,0, Wb/2, ySurf - cy0, D/2));
+    const depth = Math.max(Hu - ySurf, 120), g2 = ctx.createLinearGradient(0, 0, 0, depth);
+    g2.addColorStop(0, '#5c9a3e'); g2.addColorStop(0.03, '#3e7530'); g2.addColorStop(0.055, '#6a4a2c');
+    g2.addColorStop(0.3, '#4b3421'); g2.addColorStop(0.7, '#33261a'); g2.addColorStop(1, '#211a15');
+    ctx.fillStyle = g2; ctx.fillRect(0, 0, D, Hu - ySurf);
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(0, 0, D, Hu - ySurf);
+    ctx.restore();
+  }
+
+  // ---- elementos da cena, do fundo para a frente ----
+  const q = ISO.q.slice().sort((a, b) => (a.f - b.f) || (a.i - b.i));
+  const draw = j => {
+    ctx.save();
+    if (j.opt === 'raw'){ reset(); }
+    else {
+      setM(planeZ(j.f));
+      if (j.opt !== 'noclip'){
+        ctx.beginPath();
+        if (j.opt === 'ground') ctx.rect(RULER_WIDTH, yG, Wb, Hu - yG); else ctx.rect(RULER_WIDTH, 0, Wb, yG);
+        ctx.clip();
+      }
+    }
+    j.fn();
+    ctx.restore();
+  };
+  q.filter(j => j.opt !== 'raw').forEach(draw);
+
+  // ---- caixa de vidro: reflexos e arestas por cima de tudo ----
+  reset();
+  const Pt = (x, y, z) => { const p = S.transformPoint(new DOMPoint(x, y, z)); return [p.x, p.y]; };
+  const hx = Wb/2, hy = Hu/2, hz = D/2;
+  const poly = (pts, fill) => { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
+  const line = (a, b) => { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
+  const FTL = Pt(-hx,-hy, hz), FTR = Pt(hx,-hy, hz), FBR = Pt(hx, hy, hz), FBL = Pt(-hx, hy, hz);
+  const BTL = Pt(-hx,-hy,-hz), BTR = Pt(hx,-hy,-hz), BBR = Pt(hx, hy,-hz), BBL = Pt(-hx, hy,-hz);
+  poly([FTR, BTR, BBR, FBR], 'rgba(147,197,253,.07)');                     // vidro lateral direito
+  poly([FTL, FTR, BTR, BTL], 'rgba(255,255,255,.06)');                     // vidro superior
+  const gl = ctx.createLinearGradient(FTL[0], FTL[1], FBR[0], FBR[1]);
+  gl.addColorStop(0, 'rgba(255,255,255,.10)'); gl.addColorStop(0.35, 'rgba(255,255,255,.02)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+  poly([FTL, FTR, FBR, FBL], gl);                                           // reflexo no vidro frontal
+  ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(186,230,253,.22)';             // arestas do fundo (vistas através do vidro)
+  line(FTL, BTL); line(BTL, BTR); line(BTL, BBL);
+  ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(186,230,253,.65)';           // arestas da frente
+  line(FTL, FTR); line(FTR, FBR); line(FBR, FBL); line(FBL, FTL);
+  line(FTR, BTR); line(BTR, BBR); line(FBR, BBR);
+  q.filter(j => j.opt === 'raw').forEach(draw);            // painéis (animação de formação) ficam por cima do vidro
 }
 
 function loop(){
