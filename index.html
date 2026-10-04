@@ -13,7 +13,8 @@ header h1{font-size:1rem;color:#38bdf8;}
 #atmCanvas{width:100%;height:100%;display:block;cursor:grab;touch-action:none;}
 #atmCanvas.dragging{cursor:grabbing;}
 .canvas-container.iso{background:radial-gradient(ellipse at 50% 40%,#17243d 0%,#0b1222 62%,#05070d 100%);}
-.side-panel{width:400px;background:#1e293b;border-left:1px solid #334155;padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.side-col{width:400px;display:flex;flex-direction:column;min-height:0;background:#1e293b;border-left:1px solid #334155;}
+.side-panel{flex:1;min-height:0;background:#1e293b;padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
 .card{background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:8px;padding:11px;}
 .card-title{font-size:.75rem;font-weight:600;color:#38bdf8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
 .control-group{margin-bottom:9px;}
@@ -52,6 +53,79 @@ button.full:hover{background:#475569;}
 .mode-nav button{background:#0f172a;color:#94a3b8;border:1px solid #334155;border-bottom:none;padding:7px 12px;font-size:.72rem;cursor:pointer;border-radius:6px 6px 0 0;}
 .mode-nav button.active{background:#1e293b;color:#38bdf8;font-weight:bold;border-color:#38bdf8;}
 .ic{width:1.15em;height:1.15em;display:inline-block;vertical-align:-.2em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible;}
+
+/* ---- missões ---- */
+.ms-dock{background:linear-gradient(180deg,#172036,#1a2438);border-bottom:2px solid #fbbf24;font-size:.78rem;}
+.ms-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;color:#fde68a;}
+.ms-bar .ic{color:#fbbf24;}
+.ms-ttl{flex:1;font-weight:bold;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ms-chip{background:#0f172a;border:1px solid #fbbf24;color:#fbbf24;border-radius:999px;padding:3px 10px;font-size:.7rem;font-weight:bold;cursor:pointer;white-space:nowrap;}
+.ms-chip:hover{background:#fbbf24;color:#0f172a;}
+.ms-chev{width:8px;height:8px;border-right:2px solid #fbbf24;border-bottom:2px solid #fbbf24;transform:rotate(-45deg);transition:transform .15s;margin:0 4px;}
+.ms-chev.open{transform:rotate(45deg);}
+.ms-body{padding:2px 12px 10px;display:flex;flex-direction:column;gap:7px;max-height:46vh;overflow-y:auto;}
+.ms-meta{color:#94a3b8;font-size:.68rem;}
+.ms-ok{color:#4ade80;} .ms-gold{color:#fbbf24;}
+.ms-goal{color:#e2e8f0;line-height:1.35;}
+.ms-steps{list-style:none;display:flex;flex-direction:column;gap:4px;}
+.ms-steps li{display:flex;gap:6px;align-items:flex-start;color:#cbd5e1;}
+.ms-steps li .ic{margin-top:2px;color:#64748b;}
+.ms-steps li.ok{color:#86efac;} .ms-steps li.ok .ic{color:#4ade80;}
+.ms-steps i{color:#fbbf24;font-style:normal;}
+.ms-note{background:#3a2f0b;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;animation:msPulse 1.6s ease-out 1;}
+.ms-note.saved{background:#0f2a1c;border-color:#166534;animation:none;}
+.ms-note-t{font-weight:bold;color:#fde68a;margin-bottom:4px;} .ms-note.saved .ms-note-t{color:#86efac;}
+.ms-note ul{margin:0 0 6px 16px;color:#f1f5f9;line-height:1.4;}
+.ms-q{color:#e2e8f0;line-height:1.35;}
+.ms-confirm{margin-top:8px;width:100%;padding:8px;border:0;border-radius:8px;background:#fbbf24;color:#1f1300;font-weight:bold;cursor:pointer;}
+.ms-confirm:disabled{background:#475569;color:#cbd5e1;cursor:not-allowed;}
+.ms-gab{background:#1e1b4b;border:1px dashed #818cf8;border-radius:8px;padding:6px 9px;color:#c7d2fe;}
+.ms-nav{display:flex;gap:6px;}
+.ms-nav button{background:#0f172a;border:1px solid #334155;color:#cbd5e1;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:.8rem;}
+.ms-nav button:hover{border-color:#fbbf24;color:#fbbf24;}
+.ms-nav .ms-all{flex:1;font-size:.7rem;}
+@keyframes msPulse{0%{box-shadow:0 0 0 0 rgba(251,191,36,.7);}100%{box-shadow:0 0 0 14px rgba(251,191,36,0);}}
+#msToasts{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;}
+.ms-toast{background:#0f172a;border:1px solid #38bdf8;color:#f1f5f9;padding:10px 16px;border-radius:10px;font-size:.82rem;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:msIn .3s ease-out;text-align:center;max-width:90vw;}
+.ms-toast.ok{border-color:#4ade80;} .ms-toast.xp{border-color:#fbbf24;} .ms-toast.lvl{border-color:#c084fc;background:#1e1038;}
+.ms-toast.out{opacity:0;transform:translateY(-8px);transition:all .4s;}
+@keyframes msIn{from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:none;}}
+.ms-conf{position:absolute;top:30px;left:50%;width:9px;height:9px;border-radius:2px;animation:msConf 1.2s ease-out forwards;}
+@keyframes msConf{to{transform:translate(var(--dx),var(--dy)) rotate(540deg);opacity:0;}}
+#msModal{position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px;}
+.ms-panel{background:#1e293b;border:1px solid #475569;border-radius:14px;width:min(760px,100%);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.ms-ph{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#0f172a;color:#fbbf24;font-weight:bold;font-size:1rem;}
+.ms-ph button{background:none;border:0;color:#cbd5e1;font-size:1.6rem;cursor:pointer;line-height:1;}
+.ms-tabs{display:flex;gap:4px;padding:8px 12px 0;background:#0f172a;}
+.ms-tabs button{flex:1;background:#1e293b;border:1px solid #334155;border-bottom:0;color:#94a3b8;padding:8px;border-radius:8px 8px 0 0;cursor:pointer;font-weight:bold;}
+.ms-tabs button.on{background:#334155;color:#fbbf24;}
+.ms-lvl{padding:10px 16px;border-bottom:1px solid #334155;font-size:.8rem;color:#e2e8f0;}
+.ms-xpbar{height:10px;background:#0f172a;border-radius:6px;margin:6px 0 3px;overflow:hidden;}
+.ms-xpbar i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#fde047);}
+.ms-xpt{color:#94a3b8;font-size:.7rem;}
+.ms-pb{padding:10px 16px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.ms-grp{margin-top:8px;color:#38bdf8;font-weight:bold;font-size:.85rem;display:flex;align-items:center;gap:6px;}
+.ms-grp span{margin-left:auto;color:#94a3b8;font-weight:normal;}
+.ms-row{display:flex;gap:10px;align-items:flex-start;text-align:left;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 10px;color:#e2e8f0;cursor:pointer;}
+.ms-row:hover{border-color:#38bdf8;}
+.ms-row.done{border-color:#166534;} .ms-row.done .ic{color:#4ade80;} .ms-row.ready{border-color:#fbbf24;} .ms-row.ready .ic{color:#fbbf24;}
+.ms-rt{flex:1;display:flex;flex-direction:column;gap:2px;} .ms-rt small{color:#94a3b8;line-height:1.3;} .ms-rt em{color:#c7d2fe;font-style:normal;font-size:.72rem;}
+.ms-rx{color:#fbbf24;font-weight:bold;font-size:.75rem;white-space:nowrap;}
+.ms-badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;}
+.ms-badge{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px;align-items:center;text-align:center;color:#64748b;}
+.ms-badge .ic{width:28px;height:28px;} .ms-badge small{font-size:.68rem;}
+.ms-badge.on{border-color:#fbbf24;color:#fde68a;background:#2a2108;} .ms-badge.on .ic{color:#fbbf24;}
+.ms-sec{margin-top:10px;color:#38bdf8;font-weight:bold;font-size:.85rem;}
+.ms-players{display:flex;flex-wrap:wrap;gap:6px;}
+.ms-players button,.ms-btn,.ms-new button{background:#0f172a;border:1px solid #475569;color:#e2e8f0;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.78rem;}
+.ms-players button.on{border-color:#fbbf24;color:#fbbf24;}
+.ms-btn.warn{border-color:#b91c1c;color:#fca5a5;margin-top:10px;}
+.ms-new{display:flex;gap:6px;} .ms-new input{flex:1;background:#0f172a;border:1px solid #475569;color:#f1f5f9;border-radius:8px;padding:6px 10px;}
+.ms-hint{color:#94a3b8;font-size:.72rem;line-height:1.35;}
+.ms-entry{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px;color:#e2e8f0;} .ms-entry small{color:#94a3b8;} .ms-entry ul{margin:4px 0 4px 18px;line-height:1.4;}
+#diaryPrint{display:none;}
+@media print{ body>*:not(#diaryPrint){display:none!important;} body{display:block!important;height:auto!important;overflow:visible!important;background:#fff!important;}
+  #diaryPrint{display:block!important;color:#000;background:#fff;padding:18px;font-family:Georgia,serif;font-size:12pt;} #diaryPrint *{font-family:Georgia,serif;color:#000;} #diaryPrint h1{font-size:18pt;margin-bottom:6px;} #diaryPrint h2{font-size:13pt;margin-top:14px;} #diaryPrint ul{margin-left:20px;} }
 </style>
 </head>
 <body>
@@ -110,6 +184,10 @@ button.full:hover{background:#475569;}
 <symbol id="i-dot-white" viewBox="0 0 24 24"><path d="M18 12a6 6 0 1 0 -12 0a6 6 0 1 0 12 0" fill="#e2e8f0" stroke="none"/></symbol>
 <symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
 <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5"/><path d="M12 12v10"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3"/><path d="M7 5H4v2a3 3 0 0 0 3 3"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"/><path d="M16 8a4 4 0 1 0-8 0a4 4 0 1 0 8 0"/></symbol>
 </defs></svg>
 
 <header>
@@ -123,7 +201,7 @@ button.full:hover{background:#475569;}
     <div class="legend" id="legend"></div>
     <div class="zoom-badge" id="zoomBadge"><svg class=ic><use href=#i-search></use></svg> 1.0×</div>
   </div>
-  <div class="side-panel" id="sidePanel"></div>
+  <div class="side-col"><div id="missionDock"></div><div class="side-panel" id="sidePanel"></div></div>
 </div>
 
 <script>
@@ -4018,6 +4096,423 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
+/* ============ MISSÕES (gamificação): fazer no simulador → anotar no caderno ============
+   Cada missão tem passos que o simulador detecta sozinho (olhando os controles e cenas).
+   Ao cumprir todos os passos, o aluno recebe o que deve ANOTAR NO CADERNO (valores lidos do
+   simulador + uma pergunta para responder com as próprias palavras). Só ao confirmar que
+   anotou ele ganha os pontos (XP). Progresso salvo neste navegador, por aluno. */
+const MISSOES_PIN = '2468';            // código do modo professor (mostra gabaritos). Troque aqui, se quiser.
+const MS_KEY = 'simAtmMissoes_v1';
+const MS_TABS = {
+  estrutura:   { n:'Estrutura Vertical', ic:'layers',    b:'Explorador de camadas' },
+  circulacao:  { n:'Circulação Global',  ic:'wind',      b:'Rei dos ventos' },
+  fatores:     { n:'Fatores Climáticos', ic:'compass',   b:'Mestre dos fatores' },
+  massas:      { n:'Massas de Ar',       ic:'map',       b:'Caçador de massas' },
+  climogramas: { n:'Climogramas',        ic:'bar-chart', b:'Leitor de climogramas' },
+  sintese:     { n:'Síntese',            ic:'network',   b:'Sintetizador' }
+};
+const msF = (v, d) => v.toFixed(d === undefined ? 1 : d).replace('.', ',');
+const msN = v => Math.round(v).toLocaleString('pt-BR');
+const msEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const msCnt = { climoOk:0 };
+const msVisited = new Set(['estrutura']);
+
+const MISSIONS = [
+  /* ---------------- ESTRUTURA VERTICAL ---------------- */
+  { id:'e1', tab:'estrutura', t:'Sonda na estratosfera', xp:50, seq:true,
+    goal:'Use o controle de altitude da sondagem (card Condições) e leve-a até a camada de ozônio.',
+    steps:[ { t:'Suba a sondagem acima de 12 km (estratosfera)', test:() => state.alt > 12 },
+            { t:'Pare entre 20 e 35 km, na camada de ozônio', test:() => state.alt >= 20 && state.alt <= 35 } ],
+    note:() => [ 'Altitude da sondagem: ' + msF(state.alt) + ' km', 'Temperatura: ' + msF(tempAt(state.alt)) + ' °C',
+                 'Pressão: ' + (pressureAt(state.alt) < 10 ? msF(pressureAt(state.alt), 2) : msN(pressureAt(state.alt))) + ' hPa', 'Camada: estratosfera' ],
+    q:'Compare com o que você viu na troposfera: por que a temperatura deixa de cair e passa a subir na estratosfera?',
+    gab:'O ozônio absorve a radiação ultravioleta do Sol e, ao absorvê-la, aquece essa camada.' },
+  { id:'e2', tab:'estrutura', t:'Escudo de ozônio', xp:40, seq:true,
+    goal:'No card Condições, desligue e religue a camada de ozônio e observe o que muda no desenho.',
+    steps:[ { t:'Desligue a camada de ozônio', test:() => state.ozone === false },
+            { t:'Ligue-a novamente', test:() => state.ozone === true } ],
+    note:() => [ 'Desenhe a estratosfera com e sem a camada de ozônio.', 'Escreva o que mudou na radiação ultravioleta (UV) que chega ao solo.' ],
+    q:'Qual é a função da camada de ozônio para os seres vivos?',
+    gab:'Absorve grande parte da radiação UV, protegendo a vida de danos (câncer de pele, danos às plantas e ao plâncton).' },
+  { id:'e3', tab:'estrutura', t:'Descendo a ladeira da temperatura', xp:60,
+    goal:'Meça a temperatura em duas altitudes da troposfera e descubra quanto ela cai a cada quilômetro.',
+    steps:[ { t:'Coloque a sondagem perto do solo (até 1 km)', test:() => state.alt <= 1 },
+            { t:'Suba a sondagem até pelo menos 9 km', test:() => state.alt >= 9 } ],
+    note:() => [ 'Temperatura no solo (0 km): ' + msF(tempAt(0)) + ' °C', 'Temperatura a 10 km: ' + msF(tempAt(10)) + ' °C',
+                 'Calcule no caderno: (diferença de temperatura) ÷ 10 km = queda por quilômetro.' ],
+    q:'Quantos °C a temperatura cai, em média, a cada quilômetro de altitude na troposfera?',
+    gab:'Cerca de 6,5 °C por quilômetro (gradiente térmico vertical).' },
+  { id:'e4', tab:'estrutura', t:'Detetive da inversão térmica', xp:60, seq:true,
+    goal:'Ligue a inversão térmica e meça a temperatura onde o ar quente fica "preso" sobre o ar frio.',
+    steps:[ { t:'Ligue a inversão térmica (card Condições)', test:() => state.inversion },
+            { t:'Deixe a sondagem entre 0,8 e 2,2 km', test:() => state.inversion && state.alt >= 0.8 && state.alt <= 2.2 } ],
+    note:() => [ 'Altitude: ' + msF(state.alt) + ' km', 'Temperatura COM inversão: ' + msF(tempAt(state.alt)) + ' °C',
+                 'Temperatura SEM inversão: ' + msF(state.temp - 6.5*state.alt) + ' °C',
+                 'Diferença: ' + msF(tempAt(state.alt) - (state.temp - 6.5*state.alt)) + ' °C' ],
+    q:'Por que a inversão térmica piora a qualidade do ar nas cidades?',
+    gab:'Uma camada de ar mais quente sobre o ar frio impede que o ar de baixo suba; poluentes ficam presos perto do solo.' },
+  { id:'e5', tab:'estrutura', t:'Caçador de nuvens', xp:60,
+    goal:'Ligue as nuvens, compare uma nuvem alta com uma de desenvolvimento vertical e veja a animação da formação.',
+    steps:[ { t:'Ligue "Mostrar nuvens"', test:() => state.showClouds },
+            { t:'Escolha o tipo Cirrus', test:() => state.showClouds && state.cloudSel === 'cirrus' },
+            { t:'Escolha o tipo Cumulonimbus', test:() => state.showClouds && state.cloudSel === 'cumulonimbus' },
+            { t:'Ligue a animação "como a nuvem se forma"', test:() => state.showFormation } ],
+    note:() => [ 'Cirrus: nuvem alta (≈ 10 km no simulador), fibras de gelo.', 'Cumulonimbus: grande desenvolvimento vertical, base baixa (≈ 1,4 km no simulador), chuva forte e raios.',
+                 'Faça um desenho da formação da nuvem (4 etapas da animação).' ],
+    q:'Descreva com suas palavras como se forma um cumulus (convecção).',
+    gab:'O sol aquece o solo; o ar quente e úmido sobe, se expande e esfria; ao chegar à umidade relativa de 100 % o vapor condensa em gotículas e a nuvem cresce.' },
+  { id:'e6', tab:'estrutura', t:'Balanço de energia', xp:60,
+    goal:'Ligue a radiação e mexa na parte refletida (albedo) e nos gases estufa para ver o efeito no balanço.',
+    steps:[ { t:'Ligue a radiação (card Radiação)', test:() => state.showRadiation },
+            { t:'Mude a radiação refletida (albedo) em pelo menos 5 pontos', test:() => Math.abs(radState.albedo - 31.3) >= 5 },
+            { t:'Mude o nível dos gases estufa', test:() => radState.gh !== 2 } ],
+    note:() => [ 'Radiação solar incidente: ' + msN(radState.solar) + ' W/m²', 'Refletida (albedo): ' + msF(radState.albedo) + ' %', 'Gases estufa: ' + radState.gh + '×',
+                 'Anote o que mudou nas setas e nos valores do balanço.' ],
+    q:'O que acontece com o calor retido na atmosfera quando os gases estufa aumentam? Por quê?',
+    gab:'Mais calor é retido (parte da radiação terrestre volta para a superfície): reforça o efeito estufa e tende a aquecer o planeta.' },
+
+  /* ---------------- CIRCULAÇÃO GLOBAL ---------------- */
+  { id:'c1', tab:'circulacao', t:'Cinturões de vento', xp:50, seq:true,
+    goal:'Observe as faixas de vento de cima e de lado.',
+    steps:[ { t:'Abra "Vista de cima"', test:() => CIRC.scene === 'superficie' },
+            { t:'Volte para "Células e ventos"', test:() => CIRC.scene === 'celulas' } ],
+    note:() => [ 'Desenhe um globo dividido em faixas de latitude (0°, 30°, 60°, 90°).', 'Em cada faixa, escreva o nome do vento de superfície e a direção em que ele sopra, nos dois hemisférios.' ],
+    q:'Onde o ar sobe e onde ele desce na circulação geral? O que isso causa em cada região (chuva ou tempo seco)?',
+    gab:'Sobe na ZCIT (equador) e perto de 60° (baixas pressões, chuvas); desce perto de 30° e nos polos (altas pressões, tempo seco).' },
+  { id:'c2', tab:'circulacao', t:'Viagem da ZCIT', xp:50,
+    goal:'Em "Células e ventos" ou "Vista de cima", leve a época do ano aos dois extremos.',
+    steps:[ { t:'Coloque a época no extremo de janeiro (barra toda à esquerda)', test:() => (CIRC.scene === 'celulas' || CIRC.scene === 'superficie') && CIRC.season <= 0.08 },
+            { t:'Coloque a época no extremo de julho (barra toda à direita)', test:() => (CIRC.scene === 'celulas' || CIRC.scene === 'superficie') && CIRC.season >= 0.92 } ],
+    note:() => [ 'Em janeiro a ZCIT fica ao SUL do equador (≈ 8°S no desenho).', 'Em julho a ZCIT fica ao NORTE do equador (≈ 8°N no desenho).', 'Desenhe as duas posições em um mapa-múndi.' ],
+    q:'Por que os centros de alta e baixa pressão se deslocam ao longo do ano?',
+    gab:'O aquecimento da superfície muda com as estações (o Sol incide mais ao norte ou ao sul do equador), deslocando as faixas.' },
+  { id:'c3', tab:'circulacao', t:'Brisas do dia e da noite', xp:50,
+    goal:'Na cena Brisas, mude a hora do dia e observe a direção do vento.',
+    steps:[ { t:'Ajuste a hora para o meio do dia (11 h a 17 h)', test:() => CIRC.scene === 'brisas' && CIRC.hour >= 11 && CIRC.hour <= 17 },
+            { t:'Ajuste a hora para a madrugada (22 h a 4 h)', test:() => CIRC.scene === 'brisas' && (CIRC.hour >= 22 || CIRC.hour <= 4) } ],
+    note:() => [ 'Faça dois desenhos do litoral: um de dia e outro à noite.', 'Marque com setas o sentido do vento e onde o ar sobe.' ],
+    q:'Qual brisa sopra de dia e qual sopra à noite? Explique usando o aquecimento da terra e da água.',
+    gab:'Dia: terra aquece mais, ar sobe, brisa marítima (do mar para a terra). Noite: terra esfria mais, brisa terrestre (da terra para o mar).' },
+  { id:'c4', tab:'circulacao', t:'Monção, o vento que vira', xp:50,
+    goal:'Na cena Monções, percorra o período do ano de um extremo ao outro.',
+    steps:[ { t:'Coloque o período em Inverno (dez–jan)', test:() => CIRC.scene === 'moncoes' && CIRC.mon <= 0.08 },
+            { t:'Coloque o período em Verão (jul–ago)', test:() => CIRC.scene === 'moncoes' && CIRC.mon >= 0.92 } ],
+    note:() => [ 'Desenhe o Oceano Índico e o continente nas duas estações.', 'Marque a baixa e a alta pressão e o sentido do vento em cada uma.' ],
+    q:'Por que o vento inverte de direção entre o inverno e o verão? Qual das duas estações é chuvosa?',
+    gab:'Terra e oceano aquecem de modo diferente: no verão a baixa pressão fica sobre o continente e o vento vem do oceano (úmido, chuvoso); no inverno se inverte (vento seco do continente).' },
+  { id:'c5', tab:'circulacao', t:'Os três tipos de chuva', xp:50,
+    goal:'Na cena Tipos de chuva, aumente a intensidade e veja quando a chuva começa.',
+    steps:[ { t:'Abra a cena "Tipos de chuva"', test:() => CIRC.scene === 'chuvas' },
+            { t:'Leve a intensidade a pelo menos 80 %', test:() => CIRC.scene === 'chuvas' && CIRC.inten >= 0.8 } ],
+    note:() => [ 'Desenhe e nomeie os três tipos de chuva: convectiva, frontal e orográfica.', 'Escreva uma frase explicando como cada uma se forma.' ],
+    q:'Na chuva orográfica, em qual lado da montanha chove: barlavento ou sotavento? E no outro lado?',
+    gab:'Chove no barlavento (lado que recebe o ar úmido); o sotavento fica seco.' },
+
+  /* ---------------- FATORES CLIMÁTICOS ---------------- */
+  { id:'f1', tab:'fatores', t:'Quanto mais longe do equador…', xp:50,
+    goal:'Na cena Latitude, compare a energia que chega perto do equador e perto dos polos.',
+    steps:[ { t:'Coloque a latitude em 60° ou mais', test:() => FAT.scene === 'latitude' && FAT.lat >= 60 },
+            { t:'Coloque a latitude em 5° ou menos', test:() => FAT.scene === 'latitude' && FAT.lat <= 5 } ],
+    note:() => [ '0°: 100 % da energia por área', '45°: ' + Math.round(Math.cos(45*Math.PI/180)*100) + ' %', '60°: ' + Math.round(Math.cos(60*Math.PI/180)*100) + ' %',
+                 'Desenhe os raios do Sol chegando ao equador e a 60°.' ],
+    q:'Por que as regiões polares recebem menos calor por área do que o equador?',
+    gab:'Os raios chegam inclinados e se espalham por uma superfície maior (e atravessam mais atmosfera), então cada área recebe menos energia.' },
+  { id:'f2', tab:'fatores', t:'Escalando a montanha', xp:50,
+    goal:'Na cena Altitude, suba e desça o observador e leia a temperatura.',
+    steps:[ { t:'Leve o observador a 3.500 m ou mais', test:() => FAT.scene === 'altitude' && FAT.alt >= 3500 },
+            { t:'Leve-o a 500 m ou menos', test:() => FAT.scene === 'altitude' && FAT.alt <= 500 } ],
+    note:() => [ 'Temperatura no nível do mar: ' + msF(FAT.base) + ' °C', 'A 3.500 m: ' + msF(FAT.base - 0.0065*3500) + ' °C', 'A 4.500 m: ' + msF(FAT.base - 0.0065*4500) + ' °C',
+                 'Calcule no caderno quantos °C a temperatura cai a cada 1.000 m.' ],
+    q:'Por que fica mais frio quanto mais alto subimos, mesmo estando mais perto do Sol?',
+    gab:'O ar mais alto é menos denso e retém menos calor; o aquecimento vem da superfície, e a temperatura cai ≈ 6,5 °C a cada 1.000 m.' },
+  { id:'f3', tab:'fatores', t:'Correntes quentes e frias', xp:60,
+    goal:'Na cena Correntes marítimas, escolha uma corrente quente e uma fria e leia o efeito de cada uma.',
+    steps:[ { t:'Escolha uma corrente QUENTE', test:d => { const c = CURRENTS.find(x => x.id === FAT.sel); if (FAT.scene === 'correntes' && c && c.t === 'w'){ d.w = c.n; return true; } return false; } },
+            { t:'Escolha uma corrente FRIA', test:d => { const c = CURRENTS.find(x => x.id === FAT.sel); if (FAT.scene === 'correntes' && c && c.t === 'c'){ d.c = c.n; return true; } return false; } } ],
+    note:d => [ 'Corrente quente escolhida: ' + (d.w || '—'), 'Corrente fria escolhida: ' + (d.c || '—'), 'Copie do painel o efeito de cada uma no clima do litoral por onde passa.' ],
+    q:'Como correntes quentes e frias influenciam o clima do litoral?',
+    gab:'Quentes aquecem e umedecem o ar (mais chuva); frias esfriam e ressecam (menos chuva, até desertos, como o Atacama com a corrente de Humboldt).' },
+  { id:'f4', tab:'fatores', t:'Mar × interior', xp:50,
+    goal:'Na cena Maritimidade e continentalidade, compare o litoral com o interior do continente.',
+    steps:[ { t:'Deixe a localidade bem no litoral', test:() => FAT.scene === 'maritimidade' && FAT.cont <= 0.15 },
+            { t:'Leve-a para o interior profundo', test:() => FAT.scene === 'maritimidade' && FAT.cont >= 0.85 } ],
+    note:() => [ 'Desenhe um corte do litoral ao interior do continente.', 'Anote a amplitude térmica (diferença entre o mês mais quente e o mais frio) de cada ponto.' ],
+    q:'Em qual lugar a amplitude térmica é maior, no litoral ou no interior? Por quê?',
+    gab:'No interior (continentalidade): a terra esquenta e esfria rápido. O mar retém calor por mais tempo e modera as temperaturas no litoral.' },
+  { id:'f5', tab:'fatores', t:'Relevo e chuva', xp:50,
+    goal:'Na cena Relevo, aumente a montanha e a umidade do ar vindo do mar.',
+    steps:[ { t:'Leve a altura da montanha a 3.000 m ou mais', test:() => FAT.scene === 'relevo' && FAT.relH >= 3000 },
+            { t:'Leve a umidade do ar do mar a 90 % ou mais da escala', test:() => FAT.scene === 'relevo' && FAT.relU >= 0.9 } ],
+    note:() => [ 'Desenhe a montanha com o vento úmido chegando do mar.', 'Marque o barlavento, o sotavento e onde chove.' ],
+    q:'Por que o lado da montanha protegido do vento úmido (sotavento) é mais seco?',
+    gab:'O ar sobe pelo barlavento, esfria e condensa (chuva); ao descer pelo sotavento chega seco e aquecendo.' },
+
+  /* ---------------- MASSAS DE AR ---------------- */
+  { id:'m1', tab:'massas', t:'Verão × inverno no Brasil', xp:50, seq:true,
+    goal:'Na cena Massas no Brasil, veja como as massas se movem em cada estação.',
+    steps:[ { t:'Coloque a estação em VERÃO', test:() => MAS.scene === 'brasil' && MAS.season <= 0.05 },
+            { t:'Agora coloque em INVERNO', test:() => MAS.scene === 'brasil' && MAS.season >= 0.95 } ],
+    note:() => [ 'Desenhe o mapa do Brasil duas vezes (verão e inverno).', 'Marque a(s) massa(s) de ar que mais mudam entre uma estação e outra.' ],
+    q:'Que massa de ar avança sobre o Sul e o Sudeste no inverno e traz queda de temperatura?',
+    gab:'A massa Polar Atlântica (mPa).' },
+  { id:'m2', tab:'massas', t:'As cinco massas', xp:60,
+    goal:'Clique nas siglas do painel "Massas" para ler a ação de cada uma.',
+    steps:[ { t:'Selecione as 5 massas, uma de cada vez', p:d => (d.seen ? d.seen.size : 0) + '/5',
+              test:d => { d.seen = d.seen || new Set(); if (MAS.scene === 'brasil' && MAS.sel) d.seen.add(MAS.sel); return d.seen.size >= 5; } } ],
+    note:() => [ 'Anote a sigla, o nome e a origem de cada massa: mEa, mEc, mTa, mTc, mPa.', 'Escreva também que clima cada uma influencia.' ],
+    q:'Quais dessas massas são quentes e quais é fria? Como você sabe pelo nome?',
+    gab:'Equatoriais e tropicais (mEa, mEc, mTa, mTc) são quentes; a Polar Atlântica (mPa) é fria. A letra "a" indica atlântica (úmida) e "c" continental (mais seca).' },
+  { id:'m3', tab:'massas', t:'Onde nascem as massas', xp:50,
+    goal:'Na cena Regiões de formação, clique em regiões do mapa-múndi.',
+    steps:[ { t:'Clique em 3 regiões diferentes do mapa', p:d => (d.r ? d.r.size : 0) + '/3',
+              test:d => { d.r = d.r || new Set(); if (MAS.scene === 'mundo' && MAS.selW !== null && MAS.selW !== undefined) d.r.add(MAS.selW); return d.r.size >= 3; } } ],
+    note:() => [ 'Desenhe um mapa-múndi simples.', 'Marque pelo menos 3 regiões de formação e escreva a sigla de cada uma (cA, mP, cP, mT, cT, mE).' ],
+    q:'Por que uma massa que se forma sobre o oceano é úmida e uma que se forma sobre o deserto é seca?',
+    gab:'A massa adquire as características (temperatura e umidade) da superfície sobre a qual se forma: o mar fornece vapor, o deserto não.' },
+
+  /* ---------------- CLIMOGRAMAS ---------------- */
+  { id:'k1', tab:'climogramas', t:'Explorador de climas', xp:60,
+    goal:'No modo Explorar, clique em cidades do mapa ou da lista e leia os números do climograma.',
+    steps:[ { t:'Visite 4 cidades diferentes', p:d => (d.c ? d.c.length : 0) + '/4',
+              test:d => { d.c = d.c || []; if (MC.mode === 'explorar' && d.c.indexOf(MC.sel) < 0) d.c.push(MC.sel); return d.c.length >= 4; } } ],
+    note:d => (d.c || []).map(k => { const s = climoStats(CLIMO[k]); return CLIMO[k].n + ': chuva ≈ ' + msN(s.tot) + ' mm · temp. média ≈ ' + msF(s.tm) + ' °C · amplitude ≈ ' + msF(s.amp) + ' °C'; }),
+    q:'Qual dessas cidades tem a maior chuva anual e qual tem a maior amplitude térmica? O que explica a diferença?',
+    gab:d => { const L = (d.c || []).map(k => ({ n:CLIMO[k].n, s:climoStats(CLIMO[k]) })); if (!L.length) return '—';
+      const a = L.slice().sort((x, y) => y.s.tot - x.s.tot)[0], b = L.slice().sort((x, y) => y.s.amp - x.s.amp)[0];
+      return 'Entre as visitadas: maior chuva = ' + a.n + ' (≈ ' + msN(a.s.tot) + ' mm); maior amplitude = ' + b.n + ' (≈ ' + msF(b.s.amp) + ' °C).'; } },
+  { id:'k2', tab:'climogramas', t:'Desafio dos climogramas', xp:80,
+    goal:'No modo Desafio, descubra a qual clima pertence cada climograma sem ver o nome da cidade.',
+    steps:[ { t:'Acerte 3 desafios', p:() => Math.min(msCnt.climoOk, 3) + '/3', test:() => msCnt.climoOk >= 3 } ],
+    note:() => [ 'Anote as pistas que você usou: meses secos (menos de 60 mm), total de chuva e temperatura média.', 'Escreva um exemplo de cidade para cada clima: equatorial, semiárido, tropical, de altitude, litorâneo úmido e subtropical.' ],
+    q:'Como você distingue o clima equatorial úmido do tropical semiárido olhando só o climograma?',
+    gab:'Equatorial: muita chuva o ano todo e temperaturas altas e estáveis. Semiárido: pouca chuva concentrada em poucos meses e vários meses secos.' },
+
+  /* ---------------- SÍNTESE ---------------- */
+  { id:'s1', tab:'sintese', t:'Viajante da atmosfera', xp:80,
+    goal:'Passe por todas as seis abas do simulador (use o menu no topo).',
+    steps:[ { t:'Visite todas as 6 abas', p:() => msVisited.size + '/6', test:() => msVisited.size >= 6 } ],
+    note:() => [ 'Faça um mapa mental com os 6 temas: estrutura, circulação, fatores, massas, climogramas e síntese.', 'Ligue com setas o que influencia o quê.' ],
+    q:'Escolha um clima brasileiro e explique, ligando pelo menos 3 fatores, por que ele é assim.',
+    gab:'Resposta pessoal. Ex.: litorâneo úmido do Nordeste = alísios + massa Tropical Atlântica + proximidade do mar + corrente quente + relevo.' },
+  { id:'s2', tab:'sintese', t:'Faça em sala', xp:100,
+    goal:'Resolva os exercícios da pág. 44 no CADERNO primeiro e só depois confira a análise no simulador.',
+    steps:[ { t:'Abra a cena "Exercícios"', test:() => SYN.scene === 'exercicios' },
+            { t:'Confira a análise de pelo menos 2 exercícios', p:() => Object.keys(SYN.showAns).filter(k => SYN.showAns[k]).length + '/2',
+              test:() => Object.keys(SYN.showAns).filter(k => SYN.showAns[k]).length >= 2 } ],
+    note:() => [ 'Escreva no caderno a sua resposta ANTES de ver a análise.', 'Depois corrija com outra cor o que ficou diferente.' ],
+    q:'Qual exercício foi o mais difícil? O que você aprendeu ao comparar a sua resposta com a análise?',
+    gab:'Resposta pessoal: verificar se o aluno corrigiu no caderno.' }
+];
+const MS_TOTAL = MISSIONS.reduce((a, m) => a + m.xp, 0);
+const MS_LEVELS = [[0, 'Observador do tempo'], [150, 'Meteorologista aprendiz'], [400, 'Climatologista'], [700, 'Cientista do clima'], [1000, 'Especialista da atmosfera'], [MS_TOTAL, 'Mestre da atmosfera']];
+
+/* ---------- persistência e estado ---------- */
+const MS = { db:{ cur:'Aluno', players:{ 'Aluno':{ done:{} } }, dock:true }, prog:{}, sel:{}, teacher:false, sig:'', view:'missoes', confirm:null };
+function msLoad(){ try { const j = JSON.parse(localStorage.getItem(MS_KEY) || 'null'); if (j && j.players && j.cur && j.players[j.cur]) MS.db = j; } catch (e) {} }
+function msSave(){ try { localStorage.setItem(MS_KEY, JSON.stringify(MS.db)); } catch (e) {} }
+const msPlayer = () => MS.db.players[MS.db.cur];
+const msDone = id => !!msPlayer().done[id];
+const msXP = () => MISSIONS.reduce((a, m) => a + (msDone(m.id) ? m.xp : 0), 0);
+const msLevel = xp => { let l = 0; MS_LEVELS.forEach((x, i) => { if (xp >= x[0]) l = i; }); return l; };
+const msProg = m => MS.prog[m.id] || (MS.prog[m.id] = { s:m.steps.map(() => false), d:{}, snap:null, at:0 });
+const msTabDone = tab => MISSIONS.filter(m => m.tab === tab).every(m => msDone(m.id));
+function msGab(m, P){ return typeof m.gab === 'function' ? m.gab(P ? P.d : {}) : m.gab; }
+
+/* ---------- avaliação dos passos (a cada 250 ms) ---------- */
+function msTick(){
+  let ch = false;
+  MISSIONS.filter(m => m.tab === currentMode && !msDone(m.id)).forEach(m => {
+    const P = msProg(m); if (P.snap) return;
+    for (let i = 0; i < m.steps.length; i++){
+      if (P.s[i]) continue;
+      if (m.seq && i > 0 && !P.s[i - 1]) break;
+      let ok = false; try { ok = !!m.steps[i].test(P.d); } catch (e) {}
+      if (ok){ P.s[i] = true; ch = true; } else if (m.seq) break;
+    }
+    if (P.s.every(Boolean)){
+      try { P.snap = m.note(P.d); } catch (e) { P.snap = []; }
+      P.at = Date.now(); ch = true;
+      const list = MISSIONS.filter(x => x.tab === m.tab); MS.sel[m.tab] = list.indexOf(m);
+      msToast('<b>Missão cumprida!</b> ' + msEsc(m.t) + '<br>Agora anote no caderno para ganhar os pontos.', 'ok');
+    }
+  });
+  msRender();
+}
+
+/* ---------- confirmar o registro no caderno ---------- */
+function msConfirm(id){
+  const m = MISSIONS.find(x => x.id === id), P = msProg(m);
+  if (!P.snap || msDone(id) || Date.now() - P.at < 5000) return;
+  const l0 = msLevel(msXP()), t0 = msTabDone(m.tab);
+  msPlayer().done[id] = { ts:Date.now(), lines:P.snap, q:m.q };
+  msSave();
+  const xp = msXP(), l1 = msLevel(xp);
+  msToast('<b>+' + m.xp + ' XP</b> · ' + msEsc(m.t) + ' registrada no caderno!', 'xp');
+  if (l1 > l0){ msToast('<b>Subiu de nível!</b><br>Nível ' + (l1 + 1) + ': ' + MS_LEVELS[l1][1], 'lvl'); msBurst(); }
+  if (!t0 && msTabDone(m.tab)) msToast('<b>Conquista:</b> ' + MS_TABS[m.tab].b + '!', 'lvl');
+  if (xp >= MS_TOTAL) msToast('<b>Todas as missões concluídas!</b> Você é Mestre da atmosfera.', 'lvl');
+  const list = MISSIONS.filter(x => x.tab === m.tab), nx = list.findIndex(x => !msDone(x.id));
+  if (nx >= 0) MS.sel[m.tab] = nx;
+  MS.sig = ''; msRender(); if ($('msModal')) msModal(MS.view);
+}
+
+/* ---------- avisos e animação ---------- */
+function msToast(html, kind){
+  let c = $('msToasts'); if (!c){ c = document.createElement('div'); c.id = 'msToasts'; document.body.appendChild(c); }
+  const d = document.createElement('div'); d.className = 'ms-toast ' + (kind || ''); d.innerHTML = html; c.appendChild(d);
+  setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 400); }, 5200);
+  while (c.children.length > 4) c.firstChild.remove();
+}
+function msBurst(){
+  const c = $('msToasts'); if (!c) return;
+  for (let i = 0; i < 18; i++){
+    const s = document.createElement('span'); s.className = 'ms-conf';
+    const a = Math.random()*Math.PI*2, r = 60 + Math.random()*110;
+    s.style.setProperty('--dx', Math.cos(a)*r + 'px'); s.style.setProperty('--dy', Math.sin(a)*r - 40 + 'px');
+    s.style.background = ['#fbbf24', '#38bdf8', '#4ade80', '#f472b6', '#c084fc'][i % 5];
+    c.appendChild(s); setTimeout(() => s.remove(), 1300);
+  }
+}
+
+/* ---------- painel fixo (acima dos controles) ---------- */
+function msRender(){
+  const el = $('missionDock'); if (!el) return;
+  const tab = currentMode, list = MISSIONS.filter(m => m.tab === tab);
+  let idx = MS.sel[tab];
+  if (idx === undefined || idx >= list.length){ idx = list.findIndex(m => !msDone(m.id)); if (idx < 0) idx = 0; MS.sel[tab] = idx; }
+  const m = list[idx], P = msProg(m), done = msDone(m.id), xp = msXP(), lv = msLevel(xp);
+  const waitOk = !!P.snap && Date.now() - P.at >= 5000;
+  const labels = m.steps.map(s => s.p ? s.p(P.d) : '');
+  const sig = [tab, idx, done, P.s.join(''), P.snap ? 1 : 0, waitOk, MS.db.dock, xp, MS.db.cur, MS.teacher, labels.join(',')].join('|');
+  if (sig === MS.sig) return; MS.sig = sig;
+  // guarda a rolagem do painel (ele rola por dentro em telas pequenas) para não voltar ao topo a cada atualização
+  const oldBody = el.querySelector('.ms-body'), keepTop = (oldBody && MS.dockKey === tab + '|' + idx) ? oldBody.scrollTop : 0;
+  MS.dockKey = tab + '|' + idx;
+  const I = n => '<svg class=ic><use href=#i-' + n + '></use></svg>';
+  const nDone = list.filter(x => msDone(x.id)).length;
+  let h = '<div class="ms-dock"><div class="ms-bar" data-act="toggle">' + I('flag') +
+    '<span class="ms-ttl">Missão ' + (idx + 1) + '/' + list.length + ': ' + msEsc(m.t) + '</span>' +
+    '<button class="ms-chip" data-act="modal" title="Ver todas as missões, conquistas e diário">' + I('star') + ' Nv ' + (lv + 1) + ' · ' + xp + ' XP</button>' +
+    '<span class="ms-chev' + (MS.db.dock ? ' open' : '') + '"></span></div>';
+  if (MS.db.dock){
+    h += '<div class="ms-body">';
+    h += '<div class="ms-meta">' + msEsc(MS.db.cur) + ' · ' + nDone + ' de ' + list.length + ' missões desta aba' + (done ? ' · <b class="ms-ok">concluída (+' + m.xp + ' XP)</b>' : ' · vale <b class="ms-gold">' + m.xp + ' XP</b>') + '</div>';
+    h += '<div class="ms-goal">' + msEsc(m.goal) + '</div><ul class="ms-steps">';
+    m.steps.forEach((s, i) => {
+      const ok = done || P.s[i];
+      h += '<li class="' + (ok ? 'ok' : '') + '">' + I(ok ? 'check-circle' : 'target') + '<span>' + msEsc(s.t) + (labels[i] && !ok ? ' <i>(' + labels[i] + ')</i>' : '') + '</span></li>';
+    });
+    h += '</ul>';
+    const snap = done ? msPlayer().done[m.id].lines : P.snap;
+    if (snap){
+      h += '<div class="ms-note' + (done ? ' saved' : '') + '"><div class="ms-note-t">' + I('pencil') + (done ? ' Registrado no caderno' : ' Anote no caderno') + '</div><ul>' +
+        snap.map(x => '<li>' + msEsc(x) + '</li>').join('') + '</ul><div class="ms-q"><b>Responda:</b> ' + msEsc(m.q) + '</div>';
+      if (!done) h += '<button class="ms-confirm" data-act="confirm" data-id="' + m.id + '"' + (waitOk ? '' : ' disabled') + '>' + (waitOk ? 'Anotei no caderno (+' + m.xp + ' XP)' : 'Anote no caderno primeiro…') + '</button>';
+      h += '</div>';
+    }
+    if (MS.teacher) h += '<div class="ms-gab"><b>Gabarito:</b> ' + msEsc(msGab(m, P)) + '</div>';
+    h += '<div class="ms-nav"><button data-act="prev" title="Missão anterior">‹</button><button data-act="next" title="Próxima missão">›</button><button class="ms-all" data-act="modal">Todas as missões</button></div></div>';
+  }
+  el.innerHTML = h + '</div>';
+  const nb = el.querySelector('.ms-body');
+  if (nb){
+    const ready = !!P.snap && !done;
+    if (!ready && MS.noteSeen === m.id) MS.noteSeen = null;
+    // missão recém-cumprida: rola até o quadro "Anote no caderno" e o botão, que ficam no fim do painel
+    if (ready && MS.noteSeen !== m.id){ MS.noteSeen = m.id; nb.scrollTop = nb.scrollHeight; }
+    else nb.scrollTop = keepTop;
+  }
+}
+function msDockClick(e){
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act, tab = currentMode, n = MISSIONS.filter(m => m.tab === tab).length;
+  if (a === 'toggle'){ MS.db.dock = !MS.db.dock; msSave(); }
+  else if (a === 'modal') msModal('missoes');
+  else if (a === 'prev') MS.sel[tab] = (MS.sel[tab] + n - 1) % n;
+  else if (a === 'next') MS.sel[tab] = (MS.sel[tab] + 1) % n;
+  else if (a === 'confirm') msConfirm(b.dataset.id);
+  MS.sig = ''; msRender();
+}
+
+/* ---------- janela: missões, conquistas e diário ---------- */
+function msModal(view){
+  MS.view = view || MS.view;
+  let o = $('msModal'); if (!o){ o = document.createElement('div'); o.id = 'msModal'; document.body.appendChild(o); o.addEventListener('click', msModalClick); o.addEventListener('input', () => {}); }
+  const I = n => '<svg class=ic><use href=#i-' + n + '></use></svg>';
+  const xp = msXP(), lv = msLevel(xp), nextT = MS_LEVELS[Math.min(lv + 1, MS_LEVELS.length - 1)][0], prevT = MS_LEVELS[lv][0];
+  const pct = lv >= MS_LEVELS.length - 1 ? 100 : Math.round((xp - prevT)/(nextT - prevT)*100);
+  let h = '<div class="ms-panel" role="dialog" aria-label="Missões"><div class="ms-ph"><span>' + I('trophy') + ' Missões da atmosfera</span><button data-act="close" aria-label="Fechar">×</button></div>' +
+    '<div class="ms-tabs">' + [['missoes', 'Missões'], ['conquistas', 'Conquistas'], ['diario', 'Diário']].map(v => '<button data-act="view" data-v="' + v[0] + '" class="' + (MS.view === v[0] ? 'on' : '') + '">' + v[1] + '</button>').join('') + '</div>' +
+    '<div class="ms-lvl"><div><b>' + msEsc(MS.db.cur) + '</b> · Nível ' + (lv + 1) + ' · ' + MS_LEVELS[lv][1] + '</div><div class="ms-xpbar"><i style="width:' + pct + '%"></i></div><div class="ms-xpt">' + xp + ' / ' + MS_TOTAL + ' XP' + (lv < MS_LEVELS.length - 1 ? ' · faltam ' + (nextT - xp) + ' para o próximo nível' : ' · nível máximo!') + '</div></div><div class="ms-pb">';
+  if (MS.view === 'missoes'){
+    Object.keys(MS_TABS).forEach(tab => {
+      const L = MISSIONS.filter(m => m.tab === tab), nd = L.filter(m => msDone(m.id)).length;
+      h += '<div class="ms-grp">' + I(MS_TABS[tab].ic) + ' ' + MS_TABS[tab].n + ' <span>' + nd + '/' + L.length + '</span></div>';
+      L.forEach((m, i) => {
+        const d = msDone(m.id), rd = !!msProg(m).snap;
+        h += '<button class="ms-row ' + (d ? 'done' : rd ? 'ready' : '') + '" data-act="go" data-tab="' + tab + '" data-i="' + i + '">' + I(d ? 'check-circle' : rd ? 'pencil' : 'target') +
+          '<span class="ms-rt"><b>' + msEsc(m.t) + '</b><small>' + msEsc(m.goal) + '</small>' + (MS.teacher ? '<em>Gabarito: ' + msEsc(msGab(m, msProg(m))) + '</em>' : '') + '</span><span class="ms-rx">' + m.xp + ' XP</span></button>';
+      });
+    });
+  } else if (MS.view === 'conquistas'){
+    h += '<div class="ms-badges">' + Object.keys(MS_TABS).map(tab => { const on = msTabDone(tab); return '<div class="ms-badge ' + (on ? 'on' : '') + '">' + I(MS_TABS[tab].ic) + '<b>' + MS_TABS[tab].b + '</b><small>' + (on ? 'conquistada' : 'conclua as missões de ' + MS_TABS[tab].n) + '</small></div>'; }).join('') + '</div>';
+    h += '<div class="ms-sec">Aluno neste computador</div><div class="ms-players">' +
+      Object.keys(MS.db.players).map(n => '<button data-act="player" data-n="' + msEsc(n) + '" class="' + (n === MS.db.cur ? 'on' : '') + '">' + I('user') + ' ' + msEsc(n) + '</button>').join('') + '</div>' +
+      '<div class="ms-new"><input id="msNewName" maxlength="24" placeholder="Nome do novo aluno"><button data-act="newplayer">Criar aluno</button></div>' +
+      '<div class="ms-sec">Professor</div>' + (MS.teacher
+        ? '<button class="ms-btn" data-act="teacheroff">Sair do modo professor</button>'
+        : '<div class="ms-new"><input id="msPin" type="password" placeholder="Código do professor"><button data-act="teacheron">Entrar</button></div><div class="ms-hint">O modo professor mostra o gabarito de cada missão.</div>') +
+      '<button class="ms-btn warn" data-act="reset">' + (MS.confirm === 'reset' ? 'Clique de novo para zerar ' + msEsc(MS.db.cur) : 'Zerar progresso de ' + msEsc(MS.db.cur)) + '</button>' +
+      '<div class="ms-hint">O progresso fica salvo neste navegador. Em computadores compartilhados, cada aluno deve entrar com o seu nome.</div>';
+  } else {
+    const D = MISSIONS.filter(m => msDone(m.id));
+    h += D.length ? '<div class="ms-diary-actions"><button class="ms-btn" data-act="print">Imprimir / salvar PDF</button></div>' : '<div class="ms-hint">Ainda não há registros. Cumpra uma missão e confirme que anotou no caderno.</div>';
+    D.forEach(m => { const r = msPlayer().done[m.id]; h += '<div class="ms-entry"><b>' + msEsc(m.t) + '</b> <small>' + MS_TABS[m.tab].n + ' · ' + new Date(r.ts).toLocaleDateString('pt-BR') + '</small><ul>' + r.lines.map(x => '<li>' + msEsc(x) + '</li>').join('') + '</ul><div class="ms-q"><b>Pergunta:</b> ' + msEsc(r.q) + '</div></div>'; });
+  }
+  o.innerHTML = h + '</div></div>'; o.style.display = 'flex';
+}
+function msModalClick(e){
+  if (e.target.id === 'msModal'){ $('msModal').style.display = 'none'; return; }
+  const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act;
+  if (a === 'close') $('msModal').style.display = 'none';
+  else if (a === 'view'){ MS.confirm = null; msModal(b.dataset.v); }
+  else if (a === 'go'){ $('msModal').style.display = 'none'; if (currentMode !== b.dataset.tab) setMode(b.dataset.tab); MS.sel[b.dataset.tab] = +b.dataset.i; MS.db.dock = true; MS.sig = ''; msRender(); }
+  else if (a === 'player'){ MS.db.cur = b.dataset.n; MS.prog = {}; MS.sel = {}; msSave(); MS.sig = ''; msRender(); msModal('conquistas'); }
+  else if (a === 'newplayer'){
+    const n = ($('msNewName').value || '').trim().slice(0, 24); if (!n) return;
+    if (!MS.db.players[n]) MS.db.players[n] = { done:{} };
+    MS.db.cur = n; MS.prog = {}; MS.sel = {}; msSave(); MS.sig = ''; msRender(); msModal('conquistas');
+  }
+  else if (a === 'teacheron'){ if ($('msPin').value === MISSOES_PIN){ MS.teacher = true; MS.sig = ''; msRender(); msModal('conquistas'); } else { msToast('Código incorreto.', ''); } }
+  else if (a === 'teacheroff'){ MS.teacher = false; MS.sig = ''; msRender(); msModal('conquistas'); }
+  else if (a === 'reset'){
+    if (MS.confirm === 'reset'){ MS.db.players[MS.db.cur] = { done:{} }; MS.prog = {}; MS.sel = {}; MS.confirm = null; msSave(); MS.sig = ''; msRender(); }
+    else { MS.confirm = 'reset'; setTimeout(() => { if (MS.confirm === 'reset'){ MS.confirm = null; if ($('msModal') && $('msModal').style.display !== 'none' && MS.view === 'conquistas') msModal('conquistas'); } }, 4000); }
+    msModal('conquistas');
+  }
+  else if (a === 'print') msPrint();
+}
+function msPrint(){
+  let p = $('diaryPrint'); if (!p){ p = document.createElement('div'); p.id = 'diaryPrint'; document.body.appendChild(p); }
+  const D = MISSIONS.filter(m => msDone(m.id));
+  p.innerHTML = '<h1>Diário de missões — Simulador Atmosférico</h1><p>Aluno: <b>' + msEsc(MS.db.cur) + '</b> · ' + msXP() + ' XP · ' + MS_LEVELS[msLevel(msXP())][1] + '</p>' +
+    D.map(m => { const r = msPlayer().done[m.id]; return '<h2>' + msEsc(m.t) + ' <small>(' + MS_TABS[m.tab].n + ')</small></h2><ul>' + r.lines.map(x => '<li>' + msEsc(x) + '</li>').join('') + '</ul><p><b>Pergunta:</b> ' + msEsc(r.q) + '</p><p>Resposta no caderno: ______________________________</p>'; }).join('');
+  window.print();
+}
+
+/* ---------- ligação com o simulador ---------- */
+function msInit(){
+  msLoad();
+  const _setMode = setMode;
+  setMode = function(id){ _setMode(id); msVisited.add(id); MS.sig = ''; msRender(); };
+  const _guess = climoGuess;
+  climoGuess = function(k){ const first = MC.answer === null || MC.answer === undefined, t = CLIMO[MC.target], ok = !!t && CLIMO[k].clim === t.clim; _guess.apply(this, arguments); if (first && ok) msCnt.climoOk++; };
+  $('missionDock').addEventListener('click', msDockClick);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('msModal')) $('msModal').style.display = 'none'; });
+  msRender();
+  setInterval(msTick, 250);
+}
+
 window.addEventListener('load', ()=>{
   buildNav();
   buildPanel();
@@ -4026,6 +4521,7 @@ window.addEventListener('load', ()=>{
   if (window.ResizeObserver) new ResizeObserver(()=>resizeCanvas()).observe(canvas.parentElement);
   syncZoomUI();
   loop();
+  msInit();
 });
 window.addEventListener('resize', ()=>{ resizeCanvas(); });
 </script>
