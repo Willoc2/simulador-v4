@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Simulador Atmosférico 2D v6.5</title>
+<title>Simulador Atmosférico 2D v7.0</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif;}
 body{background:#0f172a;color:#f8fafc;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
@@ -49,7 +49,7 @@ input:checked + .slider-round:before{transform:translateX(16px);}
 .layer-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 button.full{width:100%;padding:6px;background:#334155;color:#fff;border:1px solid #475569;border-radius:5px;cursor:pointer;font-size:.72rem;font-weight:bold;}
 button.full:hover{background:#475569;}
-.mode-nav{display:flex;gap:2px;padding-top:6px;}
+.mode-nav{display:flex;gap:2px;padding-top:6px;overflow-x:auto;}
 .mode-nav button{background:#0f172a;color:#94a3b8;border:1px solid #334155;border-bottom:none;padding:7px 12px;font-size:.72rem;cursor:pointer;border-radius:6px 6px 0 0;}
 .mode-nav button.active{background:#1e293b;color:#38bdf8;font-weight:bold;border-color:#38bdf8;}
 .ic{width:1.15em;height:1.15em;display:inline-block;vertical-align:-.2em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible;}
@@ -191,7 +191,7 @@ button.full:hover{background:#475569;}
 </defs></svg>
 
 <header>
-  <h1><svg class=ic><use href=#i-globe></use></svg> Simulador Atmosférico 2D v6.5 | Geografia 1º Ano EM</h1>
+  <h1><svg class=ic><use href=#i-globe></use></svg> Simulador Atmosférico 2D v7.0 | Geografia 1º Ano EM</h1>
   <nav class="mode-nav" id="modeNav"></nav>
 </header>
 
@@ -472,6 +472,7 @@ function buildNav(){
     '<button data-mode="fatores"><svg class=ic><use href=#i-compass></use></svg> Fatores Climáticos</button>'+
     '<button data-mode="massas"><svg class=ic><use href=#i-map></use></svg> Massas de Ar</button>'+
     '<button data-mode="climogramas"><svg class=ic><use href=#i-bar-chart></use></svg> Climogramas</button>'+
+    '<button data-mode="mudancas" style="box-shadow:inset 0 -2px 0 #ef4444;color:#fca5a5;"><svg class=ic><use href=#i-flame></use></svg> Mudanças Climáticas</button>'+
     '<button data-mode="sintese"><svg class=ic><use href=#i-network></use></svg> Síntese</button>';
   document.querySelectorAll('#modeNav button').forEach(b=>{ b.onclick = () => setMode(b.dataset.mode); });
 }
@@ -3878,6 +3879,559 @@ function drawSyn(){
 }
 MODS.sintese = { build: buildSyn, draw: drawSyn, move: synMove, down: synDown };
 
+/* =====================================================================
+   MÓDULO: MUDANÇAS CLIMÁTICAS
+   Fontes: IPCC AR6 WG1 (SPM, 2021) e SR1.5 (2018); NOAA GML / Scripps (CO₂ em Mauna Loa);
+   OMM (State of the Global Climate 2024); SEEG / Observatório do Clima (emissões do Brasil, 2025).
+   Os gráficos são esquemáticos: valores arredondados, trajetórias suavizadas.
+   ===================================================================== */
+const MUD = { scene:'estufa', ppm:432, chart:'co2', ssp:'ssp245', sec:null, dT:1.5, hov:null, sspSeen:{}, secSeen:{}, t0:0 };
+const mudF = (v, d) => v.toFixed(d === undefined ? 1 : d).replace('.', ',');
+const mudSig = v => (v < -0.04 ? '−' : '+') + mudF(Math.abs(v));
+const mudDT = ppm => 3*Math.log2(ppm/280);            // resposta de equilíbrio: 3 °C por duplicação do CO₂ (IPCC AR6, melhor estimativa)
+const mudNow = () => performance.now()/1000;
+const mudProg = d => smooth01((mudNow() - MUD.t0)/(d || 1.1));
+
+/* CO₂ (ppm): testemunhos de gelo até 1958 e medições de Mauna Loa depois. Valores arredondados. */
+const MUD_CO2 = [[1850,285],[1900,296],[1925,305],[1950,311],[1960,317],[1970,326],[1980,339],[1990,354],[2000,370],[2010,390],[2020,414],[2024,425]];
+/* Aquecimento global (°C) em relação a 1850–1900: valores aproximados, suavizados (2024 = ano isolado, OMM ≈ 1,55). */
+const MUD_TEMP = [[1850,0],[1880,-0.05],[1910,-0.15],[1940,0.1],[1970,0.05],[1980,0.25],[1990,0.45],[2000,0.65],[2010,0.9],[2015,1.05],[2020,1.3],[2024,1.55]];
+/* Cenários do IPCC AR6: média de 2081–2100 (melhor estimativa e faixa muito provável). */
+const MUD_SSP = {
+  ssp126:{ n:'SSP1-2.6', d:'emissões baixas',          col:'#4ade80', end:1.8, lo:1.3, hi:2.4, p:0,    sea:'0,32 a 0,62 m' },
+  ssp245:{ n:'SSP2-4.5', d:'emissões intermediárias',  col:'#fbbf24', end:2.7, lo:2.1, hi:3.5, p:1.0,  sea:null },
+  ssp370:{ n:'SSP3-7.0', d:'emissões altas',           col:'#fb923c', end:3.6, lo:2.8, hi:4.6, p:1.15, sea:null },
+  ssp585:{ n:'SSP5-8.5', d:'emissões muito altas',     col:'#ef4444', end:4.4, lo:3.3, hi:5.7, p:1.4,  sea:'0,63 a 1,01 m' }
+};
+const MUD_SSP_KEYS = ['ssp126','ssp245','ssp370','ssp585'];
+/* Emissões brutas do Brasil em 2024: 2,145 bilhões de t CO₂e (SEEG). */
+const MUD_EMI = [
+  { id:'luc',  n:'Mudança de uso da terra', pct:42, extra:'906 milhões de t', col:'#4ade80',
+    txt:'Quase tudo é desmatamento (cerca de 98 % deste setor). Ao derrubar e queimar a floresta, o carbono guardado nas árvores volta para o ar como CO₂.',
+    sol:'Combater o desmatamento, proteger áreas nativas e restaurar florestas.' },
+  { id:'agro', n:'Agropecuária', pct:29, col:'#fbbf24',
+    txt:'O gado produz metano (CH₄) na digestão, e solos e fertilizantes liberam óxido nitroso (N₂O). Esses gases aquecem mais que o CO₂, molécula a molécula.',
+    sol:'Recuperar pastagens, integrar lavoura, pecuária e floresta e manejar melhor solo e dejetos.' },
+  { id:'en',   n:'Energia', pct:20, col:'#fb923c',
+    txt:'Queima de combustíveis fósseis, principalmente nos transportes. No mundo, a energia é o maior emissor; no Brasil pesa menos porque grande parte da eletricidade é renovável.',
+    sol:'Eletrificar transportes, ampliar solar e eólica, ganhar eficiência e usar biocombustíveis.' },
+  { id:'res',  n:'Resíduos', pct:5, col:'#a78bfa',
+    txt:'O lixo orgânico em aterros e o esgoto sem tratamento liberam metano.',
+    sol:'Coleta seletiva, compostagem, captura do biogás dos aterros e tratamento de esgoto.' },
+  { id:'ind',  n:'Processos industriais', pct:4, col:'#94a3b8',
+    txt:'Reações químicas na produção de cimento, aço e outros materiais liberam CO₂.',
+    sol:'Processos mais eficientes, reaproveitamento de materiais e novos combustíveis na indústria.' }
+];
+
+function mudInterp(a, y){
+  if (y <= a[0][0]) return a[0][1];
+  for (let i = 1; i < a.length; i++) if (y <= a[i][0]) return lerp(a[i-1][1], a[i][1], (y - a[i-1][0])/(a[i][0] - a[i-1][0]));
+  return a[a.length-1][1];
+}
+function mudSspAt(k, y){                              // trajetória esquemática: sai de 1,09 °C (2015) e chega ao valor central do IPCC em 2090
+  const s = MUD_SSP[k], u = (y - 2015)/75;
+  const g = k === 'ssp126' ? 1 - Math.pow(1 - clamp(u, 0, 1), 1.7) : Math.pow(Math.max(u, 0), s.p);
+  return 1.09 + (s.end - 1.09)*g;
+}
+function mudRR(x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function mudGo(sc){ MUD.scene = sc; MUD.t0 = mudNow(); MUD.hov = null; }
+
+/* ---------------------------------------------------------------------
+   PAINEL
+   --------------------------------------------------------------------- */
+function buildMud(p){
+  const scenes = [
+    ['estufa',   '<svg class=ic><use href=#i-sun></use></svg> Efeito estufa'],
+    ['historia', '<svg class=ic><use href=#i-bar-chart></use></svg> CO₂ e cenários'],
+    ['emissoes', '<svg class=ic><use href=#i-factory></use></svg> Emissões do Brasil'],
+    ['efeitos',  '<svg class=ic><use href=#i-thermometer></use></svg> Efeitos']
+  ];
+  let body = cardHTML('<svg class=ic><use href=#i-flame></use></svg> Mudanças climáticas', sceneButtons(scenes, MUD.scene, '#f87171'));
+  const sc = MUD.scene;
+  if (sc === 'estufa'){
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles',
+      sliderHTML('uPpm', 'uPpmV', 'CO₂ na atmosfera (ppm)', 200, 800, MUD.ppm, 1, MUD.ppm + ' ppm') +
+      '<div class="layer-grid">' +
+        '<button class="layer-btn" data-ppm="280" style="color:#4ade80">Pré-industrial</button>' +
+        '<button class="layer-btn" data-ppm="432" style="color:#fbbf24">Hoje</button>' +
+        '<button class="layer-btn" data-ppm="560" style="color:#ef4444">Dobro</button></div>' +
+      conceptHTML('<span id="uRead"></span>'));
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Conceito', conceptHTML(
+      'A luz do Sol atravessa a atmosfera e aquece a superfície. A superfície devolve esse calor como <b>radiação infravermelha</b>. ' +
+      'Gases como o <b>CO₂</b>, o <b>metano (CH₄)</b> e o <b>vapor d\'água</b> absorvem parte desse calor e reemitem uma parte de volta para baixo: é o <b>efeito estufa</b>.<br><br>' +
+      'Ele é natural e necessário: sem ele a Terra seria bem mais fria. O problema é o <b>excesso</b>, causado por queima de combustíveis fósseis e desmatamento.<br><br>' +
+      '<i>Modelo didático: cada vez que o CO₂ dobra, o equilíbrio esquenta cerca de 3 °C (melhor estimativa do IPCC, faixa provável de 2,5 a 4 °C). Antes da Revolução Industrial havia cerca de 280 ppm; em maio de 2026 o pico anual em Mauna Loa chegou a 432 ppm (NOAA/Scripps).</i>'));
+  } else if (sc === 'historia'){
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Gráfico',
+      '<div class="layer-grid">' +
+        '<button class="layer-btn' + (MUD.chart === 'co2' ? ' active' : '') + '" data-chart="co2" style="color:#f87171">CO₂ (1850–hoje)</button>' +
+        '<button class="layer-btn' + (MUD.chart === 'temp' ? ' active' : '') + '" data-chart="temp" style="color:#fbbf24">Temperatura e cenários</button></div>' +
+      '<div id="hSsp" style="margin-top:8px">' + (MUD.chart === 'temp' ? mudSspButtons() : '') + '</div>' +
+      conceptHTML('<span id="hRead"></span>'));
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Conceito', conceptHTML(
+      'O CO₂ na atmosfera subiu de cerca de <b>280 ppm</b> (antes da Revolução Industrial) para mais de <b>420 ppm</b>. A temperatura global já subiu em torno de <b>1,1 °C</b> (média de 2011–2020, IPCC).<br><br>' +
+      '<b>Cenários (SSP)</b> são trajetórias possíveis do futuro, conforme as emissões das próximas décadas. Os números são a média de <b>2081–2100</b> em relação a 1850–1900 (IPCC AR6).<br><br>' +
+      '<i>2024 foi o ano mais quente já registrado (≈ +1,55 °C, OMM). Um único ano acima de 1,5 °C não significa que a meta de longo prazo falhou: ela vale para a média de cerca de 20 anos.</i>'));
+  } else if (sc === 'emissoes'){
+    body += cardHTML('<svg class=ic><use href=#i-factory></use></svg> Setores (clique para ver)', '<div class="layer-grid">' + MUD_EMI.map(e =>
+      '<button class="layer-btn' + (MUD.sec === e.id ? ' active' : '') + '" data-sec="' + e.id + '" style="color:' + e.col + '"><div class="layer-dot" style="background:' + e.col + '"></div>' + e.n + '</button>').join('') + '</div>' +
+      conceptHTML('<span id="eRead"></span>'));
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Conceito', conceptHTML(
+      'Em 2024 o Brasil emitiu <b>2,145 bilhões de toneladas</b> de CO₂ equivalente, <b>16,7 % a menos</b> que em 2023, a maior queda em 16 anos, puxada pela redução do desmatamento (SEEG / Observatório do Clima).<br><br>' +
+      '<b>CO₂ equivalente</b> converte os outros gases (como o metano e o N₂O) na quantidade de CO₂ que aqueceria o mesmo tanto. O metano aquece muito mais que o CO₂ por molécula, mas permanece só cerca de uma década na atmosfera.<br><br>' +
+      '<i>Diferente de países industrializados, no Brasil o maior emissor é a mudança de uso da terra.</i>'));
+  } else {
+    body += cardHTML('<svg class=ic><use href=#i-sliders></use></svg> Controles',
+      sliderHTML('fDT', 'fDTV', 'Aquecimento global', 0, 4.5, MUD.dT, 0.1, '+' + mudF(MUD.dT) + ' °C') +
+      '<div class="layer-grid">' +
+        '<button class="layer-btn" data-dt="1.1" style="color:#38bdf8">2011–2020</button>' +
+        '<button class="layer-btn" data-dt="1.5" style="color:#4ade80">Paris 1,5</button>' +
+        '<button class="layer-btn" data-dt="1.8" style="color:#4ade80">SSP1-2.6</button>' +
+        '<button class="layer-btn" data-dt="2.7" style="color:#fbbf24">SSP2-4.5</button>' +
+        '<button class="layer-btn" data-dt="4.4" style="color:#ef4444">SSP5-8.5</button></div>' +
+      conceptHTML('<span id="fRead"></span>'));
+    body += cardHTML('<svg class=ic><use href=#i-book-open></use></svg> Conceito', conceptHTML(
+      'O aquecimento aumenta o calor extremo, muda o regime de chuvas, derrete gelo e eleva o nível do mar (a água esquenta e se dilata, e o gelo de terra derrete). Quanto maior o aquecimento, maiores os impactos, e <b>cada fração de grau importa</b>.<br><br>' +
+      'O <b>Acordo de Paris</b> (2015) busca manter o aquecimento "bem abaixo de 2 °C" e limitá-lo a 1,5 °C.<br><br>' +
+      '<b>O que podemos fazer:</b> cortar emissões (fim do desmatamento, energia limpa, transportes e agropecuária mais eficientes) e nos <b>adaptar</b> (cidades preparadas para chuva e calor, proteção de costas e áreas de risco).<br><br>' +
+      '<i>Desenho esquemático: o nível do mar e o gelo não estão em escala. Fontes: IPCC AR6 e SR1.5.</i>'));
+  }
+  p.innerHTML = body;
+  bindScenes(p, s => { mudGo(s); buildMud(p); });
+  if (sc === 'estufa'){
+    bindSlider('uPpm', 'uPpmV', v => Math.round(v) + ' ppm', v => { MUD.ppm = Math.round(v); mudReadEstufa(); });
+    p.querySelectorAll('[data-ppm]').forEach(b => { b.onclick = () => { const e = $('uPpm'); e.value = b.dataset.ppm; e.oninput(); }; });
+  } else if (sc === 'historia'){
+    p.querySelectorAll('[data-chart]').forEach(b => { b.onclick = () => { MUD.chart = b.dataset.chart; MUD.t0 = mudNow(); buildMud(p); }; });
+    mudBindSsp(p);
+    mudReadHist();
+  } else if (sc === 'emissoes'){
+    p.querySelectorAll('[data-sec]').forEach(b => { b.onclick = () => mudPickSec(b.dataset.sec); });
+    mudReadEmi();
+  } else {
+    bindSlider('fDT', 'fDTV', v => '+' + mudF(v) + ' °C', v => { MUD.dT = v; mudReadEfe(); });
+    p.querySelectorAll('[data-dt]').forEach(b => { b.onclick = () => { const e = $('fDT'); e.value = b.dataset.dt; e.oninput(); }; });
+  }
+}
+function mudSspButtons(){
+  return '<div class="layer-grid">' + MUD_SSP_KEYS.map(k => {
+    const s = MUD_SSP[k];
+    return '<button class="layer-btn' + (MUD.ssp === k ? ' active' : '') + '" data-ssp="' + k + '" style="color:' + s.col + '"><div class="layer-dot" style="background:' + s.col + '"></div>' + s.n + '</button>';
+  }).join('') + '</div>';
+}
+function mudBindSsp(p){
+  p.querySelectorAll('[data-ssp]').forEach(b => { b.onclick = () => {
+    MUD.ssp = b.dataset.ssp; MUD.sspSeen[MUD.ssp] = true;
+    p.querySelectorAll('[data-ssp]').forEach(x => x.classList.toggle('active', x.dataset.ssp === MUD.ssp));
+    mudReadHist();
+  }; });
+}
+function mudReadEstufa(){
+  const el = $('uRead'); if (!el) return;
+  const dT = mudDT(MUD.ppm);
+  el.innerHTML = '<b>CO₂: ' + MUD.ppm + ' ppm</b> (≈ 280 antes da Revolução Industrial)<br>' +
+    'Temperatura de equilíbrio do modelo: <b>' + mudSig(dT) + ' °C</b> em relação ao pré-industrial.<br>' +
+    '<span style="color:#64748b">O aquecimento já medido (≈ +1,1 °C em 2011–2020; +1,55 °C em 2024, ano isolado) ainda não chegou ao equilíbrio, porque os oceanos demoram a esquentar.</span>';
+}
+function mudReadHist(){
+  const el = $('hRead'); if (!el) return;
+  if (MUD.chart === 'co2'){
+    el.innerHTML = '<b>CO₂ na atmosfera</b>: de ≈ 285 ppm (1850) para 425 ppm (média de 2024). Em maio de 2026 o pico anual medido em Mauna Loa foi de 432 ppm. Passe o mouse sobre o gráfico.';
+  } else {
+    const s = MUD_SSP[MUD.ssp];
+    el.innerHTML = '<b>' + s.n + '</b> (' + s.d + '): <b>' + mudSig(s.end) + ' °C</b> em 2081–2100 (faixa muito provável: ' + mudF(s.lo) + ' a ' + mudF(s.hi) + ' °C).' +
+      (s.sea ? '<br>Nível do mar em 2100: <b>' + s.sea + '</b> acima de 1995–2014.' : '<br>Nível do mar em 2100: entre os valores dos cenários mais baixo (0,32 a 0,62 m) e mais alto (0,63 a 1,01 m).');
+  }
+}
+function mudPickSec(id){
+  MUD.sec = (MUD.sec === id) ? null : id;
+  if (MUD.sec) MUD.secSeen[MUD.sec] = true;
+  document.querySelectorAll('[data-sec]').forEach(x => x.classList.toggle('active', x.dataset.sec === MUD.sec));
+  mudReadEmi();
+}
+function mudReadEmi(){
+  const el = $('eRead'); if (!el) return;
+  const e = MUD_EMI.find(x => x.id === MUD.sec);
+  el.innerHTML = e ? '<b>' + e.n + ': ' + e.pct + ' %</b>' + (e.extra ? ' (' + e.extra + ')' : '') + '<br>' + e.txt + '<br><b>Como reduzir:</b> ' + e.sol
+                   : 'Clique em um setor (ou numa barra do gráfico) para ver de onde vêm as emissões e como reduzi-las.';
+}
+function mudNearestSsp(dT){
+  let best = null, bd = 9;
+  MUD_SSP_KEYS.forEach(k => { const d = Math.abs(MUD_SSP[k].end - dT); if (d < bd){ bd = d; best = k; } });
+  return { k:best, d:bd };
+}
+function mudReadEfe(){
+  const el = $('fRead'); if (!el) return;
+  const dT = MUD.dT, vap = (Math.pow(1.07, dT) - 1)*100, n = mudNearestSsp(dT), s = MUD_SSP[n.k];
+  el.innerHTML = '<b>' + mudSig(dT) + ' °C</b> acima do pré-industrial.<br>' +
+    'O ar pode reter ≈ <b>' + mudF(vap, 0) + ' %</b> mais vapor d\'água (≈ 7 % por °C), o que favorece chuvas mais intensas.' +
+    (n.d <= 0.45 ? '<br>Perto do cenário <b>' + s.n + '</b> (' + s.d + ').' : '');
+}
+
+/* ---------------------------------------------------------------------
+   CENA 1 · EFEITO ESTUFA
+   --------------------------------------------------------------------- */
+function drawMudEstufa(){
+  const A = { x:24, y:62, w:W - 48, h:H - 62 - 22 };
+  const ppm = MUD.ppm, dT = mudDT(ppm), warm = clamp(dT/4.5, 0, 1);
+  const gy = A.y + A.h*0.86, thermoW = 112, sx0 = A.x, sx1 = A.x + A.w - thermoW, sw = sx1 - sx0, sh = gy - A.y;
+  ctx.save(); ctx.beginPath(); ctx.rect(A.x, A.y, A.w, A.h); ctx.clip();
+  // espaço → atmosfera (a base esquenta com o CO₂)
+  let g = ctx.createLinearGradient(0, A.y, 0, gy);
+  g.addColorStop(0, '#04060f'); g.addColorStop(0.3, '#0b1a40'); g.addColorStop(1, rgbS(mixC([52,112,176], [206,120,78], warm*0.75)));
+  ctx.fillStyle = g; ctx.fillRect(sx0, A.y, sw, sh);
+  for (let i = 0; i < 40; i++){ ctx.fillStyle = 'rgba(255,255,255,' + (0.25 + 0.4*hash1(i*5.1)).toFixed(2) + ')'; ctx.fillRect(sx0 + hash1(i*3.3)*sw, A.y + hash1(i*7.9)*sh*0.3, 1.4, 1.4); }
+  const sunX = sx0 + 74, sunY = A.y + 62;
+  drawSun(sunX, sunY);
+  // camada de gases de efeito estufa
+  const yL0 = A.y + sh*0.30, yL1 = A.y + sh*0.50, dens = clamp((ppm - 150)/650, 0, 1);
+  const lg = ctx.createLinearGradient(0, yL0 - 8, 0, yL1 + 8);
+  lg.addColorStop(0, 'rgba(192,132,252,0)'); lg.addColorStop(0.5, 'rgba(192,132,252,' + (0.10 + 0.22*dens).toFixed(3) + ')'); lg.addColorStop(1, 'rgba(192,132,252,0)');
+  ctx.fillStyle = lg; ctx.fillRect(sx0, yL0 - 8, sw, yL1 - yL0 + 16);
+  // solo
+  const sg = ctx.createLinearGradient(0, gy, 0, A.y + A.h);
+  sg.addColorStop(0, '#4d7c2f'); sg.addColorStop(0.12, '#3b5d2a'); sg.addColorStop(0.2, '#4b3421'); sg.addColorStop(1, '#241a12');
+  ctx.fillStyle = sg; ctx.fillRect(sx0, gy, sw, A.y + A.h - gy);
+  drawLabel('Superfície da Terra', sx0 + 10, gy + 26, { size:11, color:'#e2e8f0' });
+  // luz solar (onda curta) e parte refletida
+  for (let k = 0; k < 4; k++){
+    const x1 = sx0 + sw*(0.12 + 0.2*k), x0 = sunX + 28 + k*16;
+    flowPath([[x0, sunY + 26 + k*2], [x1, gy - 4]], '#fde047', 2.6, { n:2, speed:0.1, base:0.3, head:6, phase:k*0.21 });
+  }
+  [0.30, 0.64].forEach((f, i) => flowPath([[sx0 + sw*f, gy - 4], [sx0 + sw*(f + 0.10), A.y + 20]], 'rgba(226,232,240,.9)', 1.7, { n:2, speed:0.09, base:0.2, head:5, phase:i*0.4, alpha:0.8 }));
+  // calor infravermelho: parte volta (efeito estufa), parte escapa
+  const absorbF = clamp(0.55 + 0.22*Math.log2(ppm/280), 0.2, 0.95), NC = 6, nAbs = Math.round(NC*absorbF);
+  const ord = [1, 4, 2, 5, 0, 3];
+  let firstAbs = -1, firstEsc = -1;
+  for (let i = 0; i < NC; i++){
+    const cx = sx0 + sw*(0.36 + 0.115*i), escapes = ord.indexOf(i) < NC - nAbs;
+    if (!escapes){
+      if (firstAbs < 0) firstAbs = i;
+      flowPath([[cx, gy - 4], [cx, yL1 + 2]], '#ef4444', 2.4, { n:2, speed:0.13, base:0.35, head:6, phase:i*0.17 });
+      softEllipse(cx, (yL0 + yL1)/2, 20, 11, [251,146,60], 0.20 + 0.14*Math.sin(time*2 + i));
+      flowPath([[cx + 17, yL1 + 4], [cx + 17, gy - 6]], '#fb923c', 2.2 + dens*1.8, { n:2, speed:0.12, base:0.4, head:6, phase:i*0.23 + 0.4 });
+    } else {
+      if (firstEsc < 0) firstEsc = i;
+      flowPath([[cx, gy - 4], [cx, A.y + 8]], '#ef4444', 2.0, { n:3, speed:0.11, base:0.25, head:5, phase:i*0.11 });
+    }
+  }
+  // moléculas de CO₂ (uma a cada ~9 ppm)
+  const nMol = Math.round(ppm/9);
+  for (let i = 0; i < nMol; i++){
+    const mx = sx0 + ((hash1(i*3.1)*sw + time*(6 + 10*hash1(i*2.7))*1.2) % sw);
+    const my = yL0 + 6 + hash1(i*7.7)*(yL1 - yL0 - 12) + Math.sin(time*0.9 + i)*2.5;
+    ctx.fillStyle = '#f87171'; ctx.beginPath(); ctx.arc(mx - 5.6, my, 2.5, 0, 6.2832); ctx.arc(mx + 5.6, my, 2.5, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#e2e8f0'; ctx.beginPath(); ctx.arc(mx, my, 3.2, 0, 6.2832); ctx.fill();
+  }
+  // rótulos
+  drawLabel('Luz do Sol', sunX + 48, A.y + 24, { size:11, color:'#fde047', bg:'rgba(4,6,15,.55)', pad:4 });
+  drawLabel('Gases de efeito estufa (CO₂ ●●●)', sx1 - 8, yL0 - 2, { size:11, color:'#e9d5ff', align:'right', bg:'rgba(4,6,15,.55)', pad:4 });
+  drawLabel('Calor da superfície (infravermelho)', sx0 + 10, gy - 12, { size:10.5, color:'#fca5a5', bg:'rgba(4,6,15,.55)', pad:4 });
+  if (firstAbs >= 0) drawLabel('Calor devolvido à superfície', sx0 + sw*(0.36 + 0.115*firstAbs) + 26, (yL1 + gy)/2 + 4, { size:10.5, color:'#fdba74', bg:'rgba(4,6,15,.6)', pad:4 });
+  if (firstEsc >= 0) drawLabel('Calor que escapa para o espaço', sx0 + sw*(0.36 + 0.115*firstEsc) + 8, A.y + 32, { size:10.5, color:'#fca5a5', bg:'rgba(4,6,15,.6)', pad:4 });
+  drawLabel('CO₂ = ' + ppm + ' ppm', sx1 - 10, A.y + 30, { size:16, color:'#f8fafc', align:'right' });
+  drawLabel(nAbs + ' de ' + NC + ' feixes de calor absorvidos', sx1 - 10, A.y + 48, { size:10.5, color:'#c4b5fd', align:'right', bold:false });
+  // termômetro (aquecimento de equilíbrio)
+  const tx = sx1 + 36, bc = sx1 + 6 + (thermoW - 8)/2, tTop = A.y + 52, tBot = gy - 14, tr = 9, V0 = -2, V1 = 5;
+  const yT = v => tBot - (v - V0)/(V1 - V0)*(tBot - tTop);
+  ctx.fillStyle = 'rgba(15,23,42,.88)'; mudRR(sx1 + 6, A.y + 6, thermoW - 8, A.h - 12, 10); ctx.fill();
+  ctx.fillStyle = 'rgba(148,163,184,.25)'; mudRR(tx - tr, tTop, tr*2, tBot - tTop + 6, tr); ctx.fill();
+  const fillC = mixC([56,189,248], [239,68,68], clamp((dT + 1)/5.5, 0, 1));
+  ctx.fillStyle = rgbS(fillC); mudRR(tx - tr + 2, Math.min(yT(dT), tBot), tr*2 - 4, tBot - Math.min(yT(dT), tBot) + 6, 4); ctx.fill();
+  ctx.beginPath(); ctx.arc(tx, tBot + 12, 13, 0, 6.2832); ctx.fill();
+  [[0, '0'], [1, '+1'], [1.5, '1,5'], [2, '+2'], [3, '+3'], [4, '+4']].forEach(t => {
+    const y = yT(t[0]); ctx.strokeStyle = t[0] === 1.5 ? '#4ade80' : 'rgba(226,232,240,.6)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(tx + tr + 1, y); ctx.lineTo(tx + tr + 7, y); ctx.stroke();
+    drawLabel(t[1] + (t[0] === 1.5 ? ' Paris' : ''), tx + tr + 10, y + 3, { size:9.5, color: t[0] === 1.5 ? '#4ade80' : '#94a3b8', bold:false });
+  });
+  drawLabel(mudSig(dT) + ' °C', bc, A.y + 30, { size:16, color: rgbS(mixC([147,197,253], [252,165,165], clamp((dT + 1)/5.5, 0, 1))), align:'center' });
+  drawLabel('equilíbrio do modelo', bc, A.y + 44, { size:9, color:'#94a3b8', align:'center', bold:false });
+  drawLabel('0 = pré-industrial', bc, tBot + 38, { size:9, color:'#94a3b8', align:'center', bold:false });
+  ctx.restore();
+}
+
+/* ---------------------------------------------------------------------
+   CENA 2 · CO₂ E CENÁRIOS
+   --------------------------------------------------------------------- */
+function mudChartGeom(){
+  const A = { x:78, y:84, w:W - 78 - 78, h:H - 84 - 76 }, co2 = MUD.chart === 'co2';
+  const G = { A, co2, x0:1850, x1: co2 ? 2030 : 2100, y0: co2 ? 260 : -0.5, y1: co2 ? 450 : 6 };
+  G.X = v => A.x + (v - G.x0)/(G.x1 - G.x0)*A.w;
+  G.Y = v => A.y + A.h - (v - G.y0)/(G.y1 - G.y0)*A.h;
+  return G;
+}
+function drawMudHist(){
+  const G = mudChartGeom(), A = G.A, co2 = G.co2, prog = mudProg(1.3);
+  ctx.fillStyle = 'rgba(15,23,42,.55)'; ctx.fillRect(A.x, A.y, A.w, A.h);
+  const yStep = co2 ? 20 : 1;
+  for (let v = Math.ceil(G.y0/yStep)*yStep; v <= G.y1; v += yStep){
+    const y = G.Y(v); ctx.strokeStyle = 'rgba(148,163,184,.14)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(A.x, y); ctx.lineTo(A.x + A.w, y); ctx.stroke();
+    drawLabel((!co2 && v > 0 ? '+' : '') + v, A.x - 8, y + 3, { size:10, color:'#94a3b8', align:'right', bold:false });
+  }
+  for (let yr = 1850; yr <= G.x1; yr += 25){
+    const x = G.X(yr); ctx.strokeStyle = 'rgba(148,163,184,.10)';
+    ctx.beginPath(); ctx.moveTo(x, A.y); ctx.lineTo(x, A.y + A.h); ctx.stroke();
+    drawLabel(String(yr), x, A.y + A.h + 16, { size:10, color:'#94a3b8', align:'center', bold:false });
+  }
+  ctx.save(); ctx.translate(A.x - 50, A.y + A.h/2); ctx.rotate(-Math.PI/2);
+  drawLabel(co2 ? 'CO₂ na atmosfera (ppm)' : 'Aquecimento (°C acima de 1850–1900)', 0, 0, { size:11, color:'#cbd5e1', align:'center', bold:false }); ctx.restore();
+  drawLabel('Ano', A.x + A.w/2, A.y + A.h + 36, { size:11, color:'#cbd5e1', align:'center', bold:false });
+
+  ctx.save(); ctx.beginPath(); ctx.rect(A.x, A.y - 4, A.w*prog + 2, A.h + 8); ctx.clip();
+  if (co2){
+    ctx.beginPath(); MUD_CO2.forEach((p, i) => { const x = G.X(p[0]), y = G.Y(p[1]); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+    ctx.lineTo(G.X(2024), A.y + A.h); ctx.lineTo(G.X(1850), A.y + A.h); ctx.closePath();
+    const ag = ctx.createLinearGradient(0, A.y, 0, A.y + A.h); ag.addColorStop(0, 'rgba(248,113,113,.38)'); ag.addColorStop(1, 'rgba(248,113,113,0)');
+    ctx.fillStyle = ag; ctx.fill();
+    ctx.strokeStyle = '#f87171'; ctx.lineWidth = 2.8; ctx.lineJoin = 'round'; ctx.beginPath();
+    MUD_CO2.forEach((p, i) => { const x = G.X(p[0]), y = G.Y(p[1]); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke();
+    const y280 = G.Y(280); ctx.setLineDash([6, 5]); ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(A.x, y280); ctx.lineTo(A.x + A.w, y280); ctx.stroke(); ctx.setLineDash([]);
+    drawLabel('≈ 280 ppm: nível pré-industrial', A.x + 10, y280 - 6, { size:10.5, color:'#4ade80' });
+    const kx = G.X(1958), ky = G.Y(313);
+    ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(kx, ky, 4.5, 0, 6.2832); ctx.fill();
+    drawLabel('1958: Keeling começa a medir em Mauna Loa (313 ppm)', kx - 6, ky - 22, { size:10.5, color:'#fde047', bg:'rgba(15,23,42,.7)', pad:4 });
+    const ex = G.X(2024), ey = G.Y(425);
+    ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.arc(ex, ey, 4.5, 0, 6.2832); ctx.fill();
+    const mx = G.X(2026), my = G.Y(432);
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.moveTo(mx, my - 6); ctx.lineTo(mx + 6, my); ctx.lineTo(mx, my + 6); ctx.lineTo(mx - 6, my); ctx.closePath(); ctx.fill();
+  } else {
+    // faixa 1,5–2 °C (metas de Paris)
+    ctx.fillStyle = 'rgba(74,222,128,.07)'; ctx.fillRect(A.x, G.Y(2), A.w, G.Y(1.5) - G.Y(2));
+    [[1.5, '#4ade80', 'Paris: 1,5 °C'], [2, '#fbbf24', '2 °C']].forEach(l => {
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = l[1]; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(A.x, G.Y(l[0])); ctx.lineTo(A.x + A.w, G.Y(l[0])); ctx.stroke(); ctx.setLineDash([]);
+      drawLabel(l[2], A.x + 8, G.Y(l[0]) - 5, { size:10, color:l[1] });
+    });
+    ctx.strokeStyle = 'rgba(226,232,240,.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(A.x, G.Y(0)); ctx.lineTo(A.x + A.w, G.Y(0)); ctx.stroke();
+    drawLabel('referência: 1850–1900', A.x + A.w - 8, G.Y(0) - 5, { size:10, color:'#cbd5e1', align:'right', bold:false });
+    // futuro: cenários
+    MUD_SSP_KEYS.forEach(k => {
+      const s = MUD_SSP[k], sel = MUD.ssp === k;
+      ctx.strokeStyle = s.col; ctx.globalAlpha = sel ? 1 : 0.5; ctx.lineWidth = sel ? 3.4 : 1.8; ctx.beginPath();
+      for (let y = 2015; y <= 2100; y += 1){ const px = G.X(y), py = G.Y(mudSspAt(k, y)); if (y === 2015) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+    });
+    const sv = MUD_SSP[MUD.ssp], bx = G.X(2090);
+    ctx.fillStyle = sv.col; ctx.globalAlpha = 0.28; ctx.fillRect(bx - 6, G.Y(sv.hi), 12, G.Y(sv.lo) - G.Y(sv.hi)); ctx.globalAlpha = 1;
+    ctx.strokeStyle = sv.col; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(bx - 8, G.Y(sv.end)); ctx.lineTo(bx + 8, G.Y(sv.end)); ctx.stroke();
+    drawLabel(mudSig(sv.end) + ' °C (' + mudF(sv.lo) + ' a ' + mudF(sv.hi) + ')', bx - 14, G.Y(sv.hi) - 8, { size:11, color:sv.col, align:'right', bg:'rgba(15,23,42,.7)', pad:4 });
+    // passado: observado
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2.8; ctx.lineJoin = 'round'; ctx.beginPath();
+    MUD_TEMP.forEach((p, i) => { const x = G.X(p[0]), y = G.Y(p[1]); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke();
+    const ox = G.X(2024), oy = G.Y(1.55);
+    ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.arc(ox, oy, 4.5, 0, 6.2832); ctx.fill();
+    drawLabel('2024: ≈ +1,55 °C (ano isolado, OMM)', ox - 10, oy - 12, { size:10.5, color:'#f8fafc', align:'right', bg:'rgba(15,23,42,.7)', pad:4 });
+    drawLabel('observado (valores aproximados)', G.X(1862), G.Y(0.38), { size:10.5, color:'#e2e8f0', bold:false });
+  }
+  ctx.restore();
+  if (!co2 && prog > 0.9) MUD_SSP_KEYS.forEach(k => drawLabel(MUD_SSP[k].n, G.X(2100) + 5, G.Y(mudSspAt(k, 2100)) + 4, { size:10, color:MUD_SSP[k].col, bold:MUD.ssp === k }));
+  if (co2){
+    drawLabel('maio/2026: 432 ppm (pico anual)', G.X(2026) - 12, G.Y(432) - 12, { size:10.5, color:'#fca5a5', align:'right', bg:'rgba(15,23,42,.7)', pad:4 });
+    drawLabel('2024: 425 ppm (média anual)', G.X(2024) - 10, G.Y(425) + 22, { size:10.5, color:'#f8fafc', align:'right', bg:'rgba(15,23,42,.7)', pad:4 });
+  }
+  // legenda de fonte
+  drawLabel(co2 ? 'Fontes: testemunhos de gelo, NOAA/Scripps (Mauna Loa). Valores arredondados.' :
+                  'Fontes: IPCC AR6 (cenários: média 2081–2100), OMM. Trajetórias esquemáticas; passado e curvas são aproximados.', A.x, H - 14, { size:9.5, color:'#64748b', bold:false });
+  // leitura sob o cursor
+  if (MUD.hov && pointer.inside && MUD.hov.x >= A.x && MUD.hov.x <= A.x + A.w && MUD.hov.y >= A.y && MUD.hov.y <= A.y + A.h){
+    const yr = Math.round(G.x0 + (MUD.hov.x - A.x)/A.w*(G.x1 - G.x0)), L = [String(yr)];
+    if (co2){ if (yr <= 2024) L.push('CO₂ ≈ ' + Math.round(mudInterp(MUD_CO2, yr)) + ' ppm'); else if (yr >= 2026) L.push('maio/2026: 432 ppm'); }
+    else {
+      if (yr <= 2024) L.push('observado ≈ ' + mudSig(mudInterp(MUD_TEMP, yr)) + ' °C');
+      if (yr >= 2015) MUD_SSP_KEYS.forEach(k => L.push(MUD_SSP[k].n + ': ' + mudSig(mudSspAt(k, yr)) + ' °C'));
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(G.X(yr), A.y); ctx.lineTo(G.X(yr), A.y + A.h); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = 'bold 11px Segoe UI'; let bw = 0; L.forEach(t => { bw = Math.max(bw, ctx.measureText(t).width); }); bw += 16;
+    const bh = L.length*15 + 10, bx = G.X(yr) + 14 + bw > A.x + A.w ? G.X(yr) - 14 - bw : G.X(yr) + 14, by = clamp(MUD.hov.y - bh/2, A.y + 4, A.y + A.h - bh - 4);
+    ctx.fillStyle = 'rgba(15,23,42,.92)'; ctx.fillRect(bx, by, bw, bh); ctx.strokeStyle = '#475569'; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+    L.forEach((t, i) => drawLabel(t, bx + 8, by + 17 + i*15, { size:11, color: i === 0 ? '#f8fafc' : '#cbd5e1', bold: i === 0 }));
+  }
+}
+
+/* ---------------------------------------------------------------------
+   CENA 3 · EMISSÕES DO BRASIL
+   --------------------------------------------------------------------- */
+let MUD_ROWS = [];
+function mudEmiPick(x, y){
+  let f = null; MUD_ROWS.forEach(r => { if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) f = r.id; }); return f;
+}
+function drawMudEmi(){
+  const A = { x:34, y:66, w:W - 68, h:H - 66 - 30 }, prog = mudProg(1.0);
+  drawLabel('2,145', A.x, A.y + 34, { size:36, color:'#f8fafc' });
+  const nw = ctx.measureText('2,145').width + 16;
+  drawLabel('bilhões de toneladas de CO₂ equivalente emitidas pelo Brasil em 2024', A.x + nw, A.y + 14, { size:12.5, color:'#e2e8f0', bold:false });
+  wrapText('{{i:check-circle}} 16,7 % a menos que em 2023, a maior queda em 16 anos, puxada pela redução do desmatamento', A.x + nw, A.y + 34, A.w - nw - 8, 14, { size:11.5, color:'#4ade80', bold:true });
+  const top = A.y + 66, gap = 8, stackH = 56, avail = A.h - 66 - stackH - 16;
+  const rowH = clamp((avail - (MUD_EMI.length - 1)*gap)/MUD_EMI.length, 30, 66), labW = Math.min(210, A.w*0.28);
+  const barX = A.x + labW, barMax = A.w - labW - 120, sc = barMax/45;
+  MUD_ROWS = [];
+  MUD_EMI.forEach((e, i) => {
+    const y = top + i*(rowH + gap), sel = MUD.sec === e.id, hov = MUD.hov && MUD.hovId === e.id;
+    MUD_ROWS.push({ id:e.id, x:A.x, y:y, w:A.w, h:rowH });
+    if (sel || hov){ ctx.fillStyle = 'rgba(148,163,184,' + (sel ? 0.12 : 0.07) + ')'; ctx.fillRect(A.x - 8, y - 3, A.w + 16, rowH + 6); }
+    drawLabel(e.n, A.x, y + rowH*0.60, { size:12.5, color: sel ? '#f8fafc' : '#e2e8f0' });
+    const bw = e.pct*sc*prog, bh = rowH*0.62, by = y + (rowH - bh)/2;
+    const bgr = ctx.createLinearGradient(barX, 0, barX + Math.max(bw, 1), 0); bgr.addColorStop(0, rgbaS(hexToRgb(e.col), 0.55)); bgr.addColorStop(1, e.col);
+    ctx.fillStyle = bgr; ctx.fillRect(barX, by, bw, bh);
+    if (sel){ ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2; ctx.strokeRect(barX - 1, by - 1, bw + 2, bh + 2); }
+    drawLabel(Math.round(e.pct*prog) + ' %', barX + bw + 10, y + rowH*0.62, { size:15, color:e.col });
+    if (e.extra && prog > 0.9) drawLabel('(' + e.extra + ')', barX + bw + 58, y + rowH*0.62, { size:10.5, color:'#94a3b8', bold:false });
+  });
+  // barra de composição (100 %)
+  const sy = top + MUD_EMI.length*(rowH + gap) + 6, sh2 = 26; let sx = A.x;
+  drawLabel('Composição das emissões (100 %)', A.x, sy - 4, { size:10.5, color:'#94a3b8', bold:false });
+  MUD_EMI.forEach(e => {
+    const w = A.w*e.pct/100*prog; ctx.fillStyle = e.col; ctx.globalAlpha = MUD.sec && MUD.sec !== e.id ? 0.35 : 1; ctx.fillRect(sx, sy, w, sh2); ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1.5; ctx.strokeRect(sx, sy, w, sh2);
+    if (w > 46) drawLabel(e.pct + ' %', sx + w/2, sy + 18, { size:11, color:'#0f172a', align:'center' });
+    sx += w;
+  });
+  // explicação do setor escolhido
+  const sel = MUD_EMI.find(x => x.id === MUD.sec), ty = sy + sh2 + 22;
+  if (sel){
+    ctx.fillStyle = 'rgba(15,23,42,.75)'; ctx.fillRect(A.x - 8, ty - 16, A.w + 16, 62);
+    ctx.fillStyle = sel.col; ctx.fillRect(A.x - 8, ty - 16, 4, 62);
+    const y2 = wrapText(sel.n + ': ' + sel.txt, A.x + 8, ty, A.w - 20, 14, { size:11.5, color:'#e2e8f0' });
+    wrapText('Como reduzir: ' + sel.sol, A.x + 8, y2 + 2, A.w - 20, 14, { size:11.5, color:sel.col });
+  } else drawLabel('Clique em uma barra para ver a explicação.', A.x, ty, { size:11.5, color:'#94a3b8', bold:false });
+  drawLabel('Fonte: SEEG / Observatório do Clima (emissões brutas, 2024).', A.x, H - 12, { size:9.5, color:'#64748b', bold:false });
+}
+
+/* ---------------------------------------------------------------------
+   CENA 4 · EFEITOS DO AQUECIMENTO
+   --------------------------------------------------------------------- */
+function drawMudEfeitos(){
+  const A = { x:24, y:62, w:W - 48, h:H - 62 - 22 }, dT = MUD.dT, warm = clamp(dT/4.5, 0, 1);
+  const L = { x:A.x, y:A.y, w:Math.round(A.w*0.60), h:A.h };
+  const gY = L.y + L.h*0.60, xC = L.x + L.w*0.60, xR = L.x + L.w;
+  ctx.save(); ctx.beginPath(); ctx.rect(L.x, L.y, L.w, L.h); ctx.clip();
+  // céu (fica mais quente e turvo)
+  let g = ctx.createLinearGradient(0, L.y, 0, gY);
+  g.addColorStop(0, rgbS(mixC([64,126,200], [150,112,110], warm*0.7))); g.addColorStop(1, rgbS(mixC([190,224,247], [236,176,126], warm*0.8)));
+  ctx.fillStyle = g; ctx.fillRect(L.x, L.y, L.w, L.h);
+  // sol
+  const sx = L.x + L.w*0.84, sy = L.y + 58, sc = mixC([255,244,180], [255,140,70], warm);
+  const sgr = ctx.createRadialGradient(sx, sy, 4, sx, sy, 90 + 40*warm); sgr.addColorStop(0, rgbaS(sc, 0.75)); sgr.addColorStop(1, rgbaS(sc, 0));
+  ctx.fillStyle = sgr; ctx.fillRect(sx - 140, sy - 140, 280, 280);
+  ctx.fillStyle = rgbS(sc); ctx.beginPath(); ctx.arc(sx, sy, 17, 0, 6.2832); ctx.fill();
+  // montanha com gelo (linha de neve sobe)
+  const pkX = L.x + L.w*0.20, pkY = L.y + L.h*0.12, bx0 = L.x - 12, bx1 = L.x + L.w*0.50;
+  ctx.fillStyle = '#4b5563'; ctx.beginPath(); ctx.moveTo(bx0, gY); ctx.lineTo(pkX, pkY); ctx.lineTo(pkX + 6, gY); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#7b8594'; ctx.beginPath(); ctx.moveTo(pkX, pkY); ctx.lineTo(bx1, gY); ctx.lineTo(pkX + 6, gY); ctx.closePath(); ctx.fill();
+  const snowFrac = clamp(0.58 - 0.105*dT, 0.04, 0.58), snY = pkY + (gY - pkY)*snowFrac;
+  const lx = lerp(pkX, bx0, snowFrac), rx = lerp(pkX, bx1, snowFrac);
+  ctx.fillStyle = 'rgba(248,250,252,.95)'; ctx.beginPath(); ctx.moveTo(pkX, pkY); ctx.lineTo(rx, snY);
+  for (let k = 1; k <= 6; k++) ctx.lineTo(lerp(rx, lx, k/6), snY + (k % 2 ? 10 : -4));
+  ctx.closePath(); ctx.fill();
+  drawLabel('Gelo de montanha', L.x + 14, L.y + L.h*0.30, { size:10.5, color:'#f8fafc', bg:'rgba(15,23,42,.45)', pad:3 });
+  // terreno
+  ctx.fillStyle = rgbS(mixC([70,128,56], [140,128,66], clamp((dT - 1)/3.5, 0, 1)));
+  ctx.beginPath(); ctx.moveTo(L.x, gY); ctx.lineTo(xC, gY); ctx.lineTo(xC + 24, gY + 34); ctx.lineTo(xR, gY + 78); ctx.lineTo(xR, L.y + L.h); ctx.lineTo(L.x, L.y + L.h); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(L.x, gY + 22, xC - L.x, L.y + L.h - gY - 22);
+  // floresta
+  const tc = mixC([30,110,58], [150,128,56], clamp((dT - 1)/3.5, 0, 1));
+  for (let i = 0; i < 12; i++){
+    const tx = L.x + L.w*0.26 + i*(xC - L.x - L.w*0.42 - 90 + 60)/12 + hash1(i*3.7)*8, th = 24 + hash1(i*5.3)*12;
+    ctx.fillStyle = '#5b4426'; ctx.fillRect(tx - 1.5, gY - 6, 3, 7);
+    ctx.fillStyle = rgbS(mixC(tc, [20,70,40], hash1(i*2.1)*0.3));
+    ctx.beginPath(); ctx.moveTo(tx, gY - th); ctx.lineTo(tx + 9, gY - 4); ctx.lineTo(tx - 9, gY - 4); ctx.closePath(); ctx.fill();
+  }
+  drawLabel('Floresta', L.x + L.w*0.26 - 12, gY + 18, { size:10.5, color:'#d1fae5', align:'right', bg:'rgba(15,23,42,.45)', pad:3 });
+  // cidade costeira
+  for (let i = 0; i < 6; i++){
+    const bw = 16 + hash1(i*4.3)*9, bh = 26 + hash1(i*8.1)*34, bx = xC - 126 + i*20;
+    ctx.fillStyle = i % 2 ? '#64748b' : '#475569'; ctx.fillRect(bx, gY - bh, bw, bh);
+    ctx.fillStyle = 'rgba(253,224,71,.6)';
+    for (let r = 0; r < bh/9 - 1; r++) { ctx.fillRect(bx + 3, gY - bh + 5 + r*9, 3, 3); ctx.fillRect(bx + bw - 7, gY - bh + 5 + r*9, 3, 3); }
+  }
+  drawLabel('Cidade costeira', xC - 130, gY + 18, { size:10.5, color:'#e2e8f0', bg:'rgba(15,23,42,.45)', pad:3 });
+  // corais no fundo do mar
+  const coralC = dT <= 1.5 ? mixC([240,110,140], [248,246,240], clamp(dT/1.5, 0, 1)) : mixC([248,246,240], [86,86,92], clamp((dT - 1.5)/0.5, 0, 1));
+  const seaFloorY = x => gY + 34 + (x - xC - 24)/(xR - xC - 24)*44;
+  for (let i = 0; i < 9; i++){
+    const cxp = xC + 50 + i*(xR - xC - 70)/9, cyp = seaFloorY(cxp) + 2, hh = 10 + hash1(i*3.9)*10;
+    ctx.strokeStyle = rgbS(coralC); ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cxp, cyp); ctx.lineTo(cxp, cyp - hh); ctx.moveTo(cxp, cyp - hh*0.5); ctx.lineTo(cxp + 5, cyp - hh*0.9); ctx.moveTo(cxp, cyp - hh*0.65); ctx.lineTo(cxp - 5, cyp - hh); ctx.stroke();
+  }
+  // mar (sobe com o aquecimento e avança sobre a planície costeira)
+  const seaTop = gY + 14 - 9.5*dT, flood = Math.max(0, gY - seaTop), fx = xC - Math.min(flood*7, xC - (L.x + L.w*0.36));
+  const wg = ctx.createLinearGradient(0, seaTop, 0, L.y + L.h); wg.addColorStop(0, 'rgba(56,140,200,.78)'); wg.addColorStop(1, 'rgba(14,52,102,.92)');
+  ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(fx, seaTop);
+  for (let x = fx; x <= xR; x += 8) ctx.lineTo(x, seaTop + Math.sin(x*0.07 + time*1.4)*1.6);
+  ctx.lineTo(xR, L.y + L.h); ctx.lineTo(fx, L.y + L.h); ctx.closePath(); ctx.fill();
+  drawLabel('Nível do mar', xR - 10, seaTop - 6, { size:10.5, color:'#e0f2fe', align:'right', bg:'rgba(15,23,42,.45)', pad:3 });
+  drawLabel('Corais', xR - 10, L.y + L.h - 12, { size:10.5, color:'#e2e8f0', align:'right', bg:'rgba(15,23,42,.45)', pad:3 });
+  // calor sobre o solo
+  if (dT > 0.8){
+    ctx.strokeStyle = 'rgba(255,220,170,' + (0.08 + 0.06*dT).toFixed(2) + ')'; ctx.lineWidth = 2;
+    for (let r = 0; r < 3; r++){ ctx.beginPath(); for (let x = L.x + L.w*0.1; x < xC - 30; x += 6){ const yy = gY - 34 - r*14 + Math.sin(x*0.09 + time*2 + r)*3; if (x === L.x + L.w*0.1) ctx.moveTo(x, yy); else ctx.lineTo(x, yy); } ctx.stroke(); }
+  }
+  // nuvem e chuva (mais água no ar = chuva mais forte)
+  const cxn = L.x + L.w*0.50, cyn = L.y + L.h*0.20;
+  cloudCumulus(cxn, cyn, 26 + 6*warm);
+  const nd = Math.round(14*Math.pow(1.07, dT)*1.6);
+  ctx.strokeStyle = 'rgba(190,220,250,.75)'; ctx.lineWidth = 1.2;
+  for (let i = 0; i < nd; i++){
+    const ph = (time*1.6 + hash1(i*3.3)*3) % 1, px = cxn - 34 + hash1(i*7.7)*68, py = cyn + 20 + ph*(gY - cyn - 24);
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 2, py + 8); ctx.stroke();
+  }
+  drawLabel('Chuva forte', cxn + 44, cyn + 4, { size:10.5, color:'#e0f2fe', bg:'rgba(15,23,42,.45)', pad:3 });
+  drawLabel(mudSig(dT) + ' °C', L.x + 14, L.y + 24, { size:24, color:'#f8fafc', bg:'rgba(15,23,42,.45)', pad:6 });
+  ctx.restore();
+
+  // lista de efeitos
+  const R = { x:L.x + L.w + 18, y:A.y, w:A.w - L.w - 18, h:A.h };
+  if (R.w < 200) return;
+  const n = mudNearestSsp(dT), vap = (Math.pow(1.07, dT) - 1)*100;
+  const coral = dT < 1.5 ? 'Já sofrem com ondas de calor marinhas; o risco cresce.' : (dT < 2 ? 'Perda de 70 a 90 % dos recifes (a 1,5 °C).' : 'Perda de mais de 99 % dos recifes (a 2 °C).');
+  const arct = dT < 1.5 ? 'O gelo marinho de verão já encolhe.' : (dT < 2 ? 'Verão sem gelo no Ártico ≈ 1 vez por século (a 1,5 °C).' : 'Verão sem gelo no Ártico ≈ 1 vez por década (a 2 °C).');
+  const rows = [
+    { ic:'thermometer', c:'#fb923c', t:'Calor, chuva forte e seca', x:'Cada fração de grau a mais aumenta a frequência e a intensidade desses extremos.', lv:dT/4.5 },
+    { ic:'droplet',     c:'#38bdf8', t:'Mais vapor no ar: +' + mudF(vap, 0) + ' %', x:'O ar mais quente retém ≈ 7 % mais vapor por °C, e as chuvas ficam mais intensas.', lv:clamp(vap/35, 0, 1) },
+    { ic:'waves',       c:'#60a5fa', t:'Nível do mar até 2100', x:'0,32 a 0,62 m (cenário de 1,8 °C) até 0,63 a 1,01 m (cenário de 4,4 °C).' + (n.d <= 0.45 ? ' Você está perto do ' + MUD_SSP[n.k].n + '.' : ''), lv:clamp(dT/4.5, 0, 1) },
+    { ic:'waves',       c:'#f472b6', t:'Recifes de coral', x:coral, lv:dT < 1.5 ? 0.25 : (dT < 2 ? 0.75 : 1) },
+    { ic:'snowflake',   c:'#7dd3fc', t:'Gelo do Ártico e geleiras', x:arct, lv:clamp(dT/3, 0, 1) },
+    { ic:'tree',        c:'#f87171', t:'Pontos de não retorno', x:'Quanto maior o aquecimento, maior o risco de mudanças difíceis de reverter (ex.: floresta amazônica, mantos de gelo).', lv:clamp((dT - 1)/3.5, 0, 1) }
+  ];
+  drawLabel('O que muda com o aquecimento', R.x, R.y + 14, { size:12.5, color:'#f8fafc' });
+  const rg = 6, rh = clamp((R.h - 30 - rg*(rows.length - 1))/rows.length, 44, 84);
+  rows.forEach((r, i) => {
+    const y = R.y + 28 + i*(rh + rg);
+    ctx.fillStyle = 'rgba(15,23,42,.7)'; ctx.fillRect(R.x, y, R.w, rh);
+    ctx.fillStyle = 'rgba(148,163,184,.18)'; ctx.fillRect(R.x, y + rh - 4, R.w, 4);
+    ctx.fillStyle = r.c; ctx.fillRect(R.x, y + rh - 4, R.w*clamp(r.lv, 0.03, 1), 4);
+    ctx.fillStyle = r.c; ctx.fillRect(R.x, y, 3, rh - 4);
+    drawLabel('{{i:' + r.ic + '}} ' + r.t, R.x + 12, y + 16, { size:11.5, color:r.c });
+    wrapText(r.x, R.x + 12, y + 31, R.w - 22, 13, { size:10.5, color:'#cbd5e1' });
+  });
+  drawLabel('Fontes: IPCC AR6 e SR1.5 (esquemático).', R.x, H - 12, { size:9.5, color:'#64748b', bold:false });
+}
+
+/* ---------------------------------------------------------------------
+   ENTRADA, DESENHO E REGISTRO
+   --------------------------------------------------------------------- */
+function mudMove(x, y){
+  MUD.hov = { x, y };
+  if (MUD.scene === 'emissoes'){ MUD.hovId = mudEmiPick(x, y); canvas.style.cursor = MUD.hovId ? 'pointer' : ''; } else canvas.style.cursor = '';
+}
+function mudDown(x, y){
+  if (MUD.scene === 'emissoes'){ const id = mudEmiPick(x, y); if (id) mudPickSec(id); }
+}
+function drawMud(){
+  drawModuleBg();
+  const sc = MUD.scene;
+  if (sc === 'estufa'){ drawTitle('Efeito estufa e CO₂', 'Quanto mais CO₂, mais calor volta para a superfície (modelo didático)'); drawMudEstufa(); }
+  else if (sc === 'historia'){ drawTitle(MUD.chart === 'co2' ? 'CO₂ na atmosfera: 1850 até hoje' : 'Temperatura global: passado e cenários do futuro', MUD.chart === 'co2' ? 'Passe o mouse sobre o gráfico para ler os valores' : 'Escolha um cenário (SSP) no painel para ver a faixa de incerteza'); drawMudHist(); }
+  else if (sc === 'emissoes'){ drawTitle('De onde vêm as emissões do Brasil', 'Participação de cada setor nas emissões brutas de 2024'); drawMudEmi(); }
+  else { drawTitle('Efeitos do aquecimento global', 'Arraste o controle de aquecimento no painel e observe o que muda'); drawMudEfeitos(); }
+}
+MODS.mudancas = { build: p => { MUD.t0 = mudNow(); buildMud(p); }, draw: drawMud, move: mudMove, down: mudDown };
+
 
 /* ============ READOUTS ============ */
 function updateReadouts(){
@@ -4109,6 +4663,7 @@ const MS_TABS = {
   fatores:     { n:'Fatores Climáticos', ic:'compass',   b:'Mestre dos fatores' },
   massas:      { n:'Massas de Ar',       ic:'map',       b:'Caçador de massas' },
   climogramas: { n:'Climogramas',        ic:'bar-chart', b:'Leitor de climogramas' },
+  mudancas:    { n:'Mudanças Climáticas', ic:'flame',     b:'Guardião do clima' },
   sintese:     { n:'Síntese',            ic:'network',   b:'Sintetizador' }
 };
 const msF = (v, d) => v.toFixed(d === undefined ? 1 : d).replace('.', ',');
@@ -4287,11 +4842,48 @@ const MISSIONS = [
     q:'Como você distingue o clima equatorial úmido do tropical semiárido olhando só o climograma?',
     gab:'Equatorial: muita chuva o ano todo e temperaturas altas e estáveis. Semiárido: pouca chuva concentrada em poucos meses e vários meses secos.' },
 
+  /* ---------------- MUDANÇAS CLIMÁTICAS ---------------- */
+  { id:'u1', tab:'mudancas', t:'Termômetro do CO₂', xp:60, seq:true,
+    goal:'Na cena "Efeito estufa", leve o CO₂ ao dobro do nível pré-industrial e depois volte ao nível de antes da Revolução Industrial.',
+    steps:[ { t:'Abra a cena "Efeito estufa"', test:() => MUD.scene === 'estufa' },
+            { t:'Leve o CO₂ a 560 ppm ou mais (o dobro de 280)', test:() => MUD.scene === 'estufa' && MUD.ppm >= 560 },
+            { t:'Volte o CO₂ para 290 ppm ou menos', test:() => MUD.scene === 'estufa' && MUD.ppm <= 290 } ],
+    note:() => [ 'CO₂ pré-industrial: 280 ppm → aquecimento de equilíbrio do modelo: ' + mudSig(mudDT(280)) + ' °C',
+                 'CO₂ de hoje (pico de 2026): 432 ppm → ' + mudSig(mudDT(432)) + ' °C',
+                 'CO₂ dobrado: 560 ppm → ' + mudSig(mudDT(560)) + ' °C',
+                 'Desenhe o caminho do calor: Sol → superfície → gases de efeito estufa → volta para a superfície.' ],
+    q:'O que acontece com o calor emitido pela superfície quando há mais CO₂ na atmosfera?',
+    gab:'Mais calor é absorvido pelos gases de efeito estufa e devolvido à superfície, então o planeta esquenta (no modelo, cada duplicação do CO₂ aquece cerca de 3 °C no equilíbrio).' },
+  { id:'u2', tab:'mudancas', t:'Detetive dos cenários', xp:70,
+    goal:'Na cena "CO₂ e cenários", mostre o gráfico de temperatura e compare diferentes futuros possíveis.',
+    steps:[ { t:'Abra o gráfico "Temperatura e cenários"', test:() => MUD.scene === 'historia' && MUD.chart === 'temp' },
+            { t:'Clique em pelo menos 3 cenários (SSP) no painel', p:() => Math.min(Object.keys(MUD.sspSeen).length, 3) + '/3', test:() => Object.keys(MUD.sspSeen).length >= 3 } ],
+    note:() => MUD_SSP_KEYS.map(k => MUD_SSP[k].n + ' (' + MUD_SSP[k].d + '): ' + mudSig(MUD_SSP[k].end) + ' °C em 2081–2100').concat([ 'Aquecimento já medido: ≈ +1,1 °C (2011–2020).' ]),
+    q:'Qual é a diferença de aquecimento entre o cenário de emissões mais baixas e o de mais altas, e o que isso mostra?',
+    gab:'Cerca de 2,6 °C (1,8 °C contra 4,4 °C). Mostra que as escolhas de hoje sobre emissões definem o clima do fim do século.' },
+  { id:'u3', tab:'mudancas', t:'Quem emite no Brasil?', xp:70,
+    goal:'Na cena "Emissões do Brasil", descubra quais são os três setores que mais emitem.',
+    steps:[ { t:'Abra a cena "Emissões do Brasil"', test:() => MUD.scene === 'emissoes' },
+            { t:'Clique nos 3 maiores setores', p:() => ['luc', 'agro', 'en'].filter(k => MUD.secSeen[k]).length + '/3', test:() => ['luc', 'agro', 'en'].every(k => MUD.secSeen[k]) } ],
+    note:() => MUD_EMI.slice(0, 3).map(e => e.n + ': ' + e.pct + ' % das emissões brutas de 2024.').concat([ 'Total: 2,145 bilhões de toneladas de CO₂ equivalente (queda de 16,7 % em relação a 2023).' ]),
+    q:'Por que o maior setor emissor do Brasil é diferente do de países industrializados?',
+    gab:'No Brasil o maior setor é a mudança de uso da terra, principalmente o desmatamento (42 %). Em países industrializados predomina a queima de combustíveis fósseis (energia).' },
+  { id:'u4', tab:'mudancas', t:'Cada décimo de grau conta', xp:80, seq:true,
+    goal:'Na cena "Efeitos", compare um mundo muito mais quente com um mundo que cumpre a meta de Paris.',
+    steps:[ { t:'Abra a cena "Efeitos"', test:() => MUD.scene === 'efeitos' },
+            { t:'Leve o aquecimento a 4 °C ou mais', test:() => MUD.scene === 'efeitos' && MUD.dT >= 4 },
+            { t:'Volte o aquecimento para 1,5 °C ou menos', test:() => MUD.scene === 'efeitos' && MUD.dT <= 1.5 } ],
+    note:() => [ 'Com +1,5 °C: o ar retém ≈ ' + msF((Math.pow(1.07, 1.5) - 1)*100, 0) + ' % mais vapor d\'água.',
+                 'Com +4 °C: o ar retém ≈ ' + msF((Math.pow(1.07, 4) - 1)*100, 0) + ' % mais vapor d\'água.',
+                 'Anote o que mudou no desenho: linha de neve, nível do mar, recifes de coral e chuva.' ],
+    q:'Cite dois efeitos que ficam mais fortes quando o aquecimento passa de 1,5 °C para 4 °C.',
+    gab:'Exemplos: chuvas fortes e calor extremo mais frequentes, mais perda de gelo e de recifes de coral e maior elevação do nível do mar.' },
+
   /* ---------------- SÍNTESE ---------------- */
   { id:'s1', tab:'sintese', t:'Viajante da atmosfera', xp:80,
-    goal:'Passe por todas as seis abas do simulador (use o menu no topo).',
-    steps:[ { t:'Visite todas as 6 abas', p:() => msVisited.size + '/6', test:() => msVisited.size >= 6 } ],
-    note:() => [ 'Faça um mapa mental com os 6 temas: estrutura, circulação, fatores, massas, climogramas e síntese.', 'Ligue com setas o que influencia o quê.' ],
+    goal:'Passe por todas as sete abas do simulador (use o menu no topo).',
+    steps:[ { t:'Visite todas as 7 abas', p:() => msVisited.size + '/7', test:() => msVisited.size >= 7 } ],
+    note:() => [ 'Faça um mapa mental com os 7 temas: estrutura, circulação, fatores, massas, climogramas, mudanças climáticas e síntese.', 'Ligue com setas o que influencia o quê.' ],
     q:'Escolha um clima brasileiro e explique, ligando pelo menos 3 fatores, por que ele é assim.',
     gab:'Resposta pessoal. Ex.: litorâneo úmido do Nordeste = alísios + massa Tropical Atlântica + proximidade do mar + corrente quente + relevo.' },
   { id:'s2', tab:'sintese', t:'Faça em sala', xp:100,
